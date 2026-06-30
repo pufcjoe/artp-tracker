@@ -7,7 +7,7 @@ import { Search, User, Users, Database, ChevronDown, TrendingUp, Crown } from "l
 /* ================================================================== *
  *  PR = decayed strength rating from real S8 placements.
  *  Per-result value uses the official ARTP point table; PR then
- *  decays continuously: 100% for 90 days, then a 180-day half-life.
+ *  decays continuously: 100% for 90 days, then a 360-day half-life.
  *  (Official ladder is separate: 26-week cliff for singles, season
  *   reset for doubles — not recomputed here, per request.)
  * ================================================================== */
@@ -1228,9 +1228,9 @@ function PRTip({ active, payload }) {
 
 export default function ARTPTracker() {
   const [mode, setMode] = useState("S");
-  const [hl, setHl] = useState(180);
-  const [query, setQuery] = useState("vitzaru");
-  const [active, setActive] = useState("vitzaru");
+  const [hl, setHl] = useState(360);
+  const [query, setQuery] = useState("ilovetennis678");
+  const [active, setActive] = useState("ilovetennis678");
   const [showImport, setShowImport] = useState(false);
   const [draft, setDraft] = useState(DEFAULT_DATA.trim());
   const [src, setSrc] = useState(DEFAULT_DATA);
