@@ -43,6 +43,7 @@ const FORCE_DISPLAY = {
   vitzaru: "vitzaru",
   slowflin2442: "Slowflin2442",
   kuzuderee: "kuzuderee",
+  flenxuu: "flenxuu"
 };
 
 const canon = (n) => { const k = n.trim().toLowerCase(); return ALIASES[k] || k; };
