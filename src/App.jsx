@@ -5,18 +5,24 @@ import {
 import { Search, User, Users, Database, ChevronDown, TrendingUp, Crown } from "lucide-react";
 
 /* ================================================================== *
- *  PR = decayed strength rating from real S8 placements.
- *  Per-result value uses the official ARTP point table; PR then
- *  decays continuously: 100% for 90 days, then a 360-day half-life.
- *  (Official ladder is separate: 26-week cliff for singles, season
- *   reset for doubles — not recomputed here, per request.)
+ *  PR = sum of a player's decayed tournament placements (no cap).
+ *  Decay (Fortnite Tracker style):
+ *     0–180 days   -> 100% value
+ *     180–730 days -> linear fade
+ *     2 years+     -> 0%
+ *  Per-result value uses the official ARTP point table. The official
+ *  ranking ladder (26-week cliff / season reset) is separate and is
+ *  NOT recomputed here.
  * ================================================================== */
 
 const NOW = new Date("2026-06-30");
-const GRACE_DAYS = 360;          // fixed full-credit window
 const DAY = 86400000;
+const FULL_DAYS = 180;   // results keep 100% of their value up to here
+const ZERO_DAYS = 730;   // fully decayed to 0% (2 years)
 
-// official ARTP points by tier x round  (also the PR per-result base)
+// Owner-only data editor: add #admin to the site URL to reveal it.
+const ADMIN_KEY = "admin";
+
 const PTS = {
   "Grand Slam": { W: 2000, F: 1200, SF: 720, QF: 360, R16: 180, R32: 90, R64: 45, R128: 20 },
   "Masters":    { W: 1000, F: 600,  SF: 360, QF: 180, R16: 90,  R32: 45 },
@@ -37,18 +43,21 @@ const ALIASES = {
   lengku01: "lengku012", cristy_valentn: "cristy_valentin", tylerlikesair1: "tylerlikesair",
   andrewluvzgo: "andrewluvzgod", ambitiouscaleb: "ambitiouscalebb", steevs: "steezvs",
   xxx123phoneix123xx: "xxx123phoenix123xx", flenxugreatest: "flenxuu", flenxu_greatest: "flenxuu",
+  calvhin: "caivhin", loumac700: "loumac", xx123phoenix123xx: "xxx123phoenix123xx", "3norty": "norty",
+  cristyvalentin_2005: "cristy_valentin", khaiedrai: "wingstopeffect", lava: "ytlavaawesomeness",
 };
 
 const FORCE_DISPLAY = {
   vitzaru: "vitzaru",
   slowflin2442: "Slowflin2442",
   kuzuderee: "kuzuderee",
-  flenxuu: "flenxuu"
+  flenxuu: "flenxuu",
 };
 
 const canon = (n) => { const k = n.trim().toLowerCase(); return ALIASES[k] || k; };
 const ptsFor = (tier, round) => (PTS[tier] && PTS[tier][round]) || 0;
-const decayW = (daysAgo, hl) => (daysAgo <= GRACE_DAYS ? 1 : Math.pow(0.5, (daysAgo - GRACE_DAYS) / hl));
+const decayW = (daysAgo) =>
+  daysAgo <= FULL_DAYS ? 1 : daysAgo >= ZERO_DAYS ? 0 : 1 - (daysAgo - FULL_DAYS) / (ZERO_DAYS - FULL_DAYS);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
 
 const DEFAULT_DATA = `
@@ -600,66 +609,6 @@ S|2025-07-21|Winnipeg National Bank Open|Challenger|Luckyvzz|R32|
 S|2025-07-21|Winnipeg National Bank Open|Challenger|Grimsical|R32|
 S|2025-07-21|Winnipeg National Bank Open|Challenger|Not_Z3P|R32|
 S|2025-07-21|Winnipeg National Bank Open|Challenger|SamXTran|R32|
-S|2025-05-23|Napoli Tennis Cup|Challenger|Lygoh1|W|
-S|2025-05-23|Napoli Tennis Cup|Challenger|lemgendarynaruto|F|
-S|2025-05-23|Napoli Tennis Cup|Challenger|sflynt|SF|
-S|2025-05-23|Napoli Tennis Cup|Challenger|Rdarggg|SF|
-S|2025-05-23|Napoli Tennis Cup|Challenger|nonotitan0003|QF|
-S|2025-05-23|Napoli Tennis Cup|Challenger|h2hvenom|QF|
-S|2025-05-23|Napoli Tennis Cup|Challenger|mokilkopop|QF|
-S|2025-05-23|Napoli Tennis Cup|Challenger|Lolgen6|QF|
-S|2025-05-23|Napoli Tennis Cup|Challenger|77vuk|R16|
-S|2025-04-14|Rosario Challenger|Challenger|Lygoh1|W|
-S|2025-04-14|Rosario Challenger|Challenger|asianbone|F|
-S|2025-04-14|Rosario Challenger|Challenger|cromzonic|SF|
-S|2025-04-14|Rosario Challenger|Challenger|nonotitan0003|SF|
-S|2025-04-14|Rosario Challenger|Challenger|egojustforme|QF|
-S|2025-04-14|Rosario Challenger|Challenger|eiraffy|QF|
-S|2025-04-14|Rosario Challenger|Challenger|lemgendarynaruto|QF|
-S|2025-04-14|Rosario Challenger|Challenger|mycurrentstatus|QF|
-S|2026-02-22|Canberra International|Challenger|6Hermes|W|
-S|2026-02-22|Canberra International|Challenger|karimk897|F|
-S|2026-02-22|Canberra International|Challenger|maksymilandr007|SF|
-S|2026-02-22|Canberra International|Challenger|SamXTran|SF|
-S|2026-02-22|Canberra International|Challenger|sflynt|QF|
-S|2026-02-22|Canberra International|Challenger|wzueki|QF|
-S|2026-02-22|Canberra International|Challenger|Cap7ainMGF|QF|
-S|2026-02-22|Canberra International|Challenger|PiesekMC|QF|
-S|2026-02-22|Canberra International|Challenger|Xinja_XiiYT|R16|
-S|2026-02-22|Canberra International|Challenger|0xtek|R16|
-S|2026-02-22|Canberra International|Challenger|idrissss123_2|R16|
-S|2026-02-22|Canberra International|Challenger|clashofclans12308|R16|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|Milos_FullGaming|W|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|Nxbxula|F|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|wzueki|SF|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|kacper6754|SF|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|sflynt|QF|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|megacardealer|QF|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|CarKostas|QF|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|PiesekMC|QF|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|Ziadgamer2021xd|R16|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|Xinja_XiiYT|R16|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|WakamiyaShinobu|R16|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|PanPlacuszek24|R16|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|Qry_tps|R16|
-S|2025-11-15|Newport Hall of Fame Open|Challenger|Empri0|R16|
-S|2025-09-18|Tampere Open|Challenger|ilikegames_y|W|
-S|2025-09-18|Tampere Open|Challenger|MaximusM1350|F|
-S|2025-09-18|Tampere Open|Challenger|greeninhho|SF|
-S|2025-09-18|Tampere Open|Challenger|wzueki|SF|
-S|2025-09-18|Tampere Open|Challenger|RECKLESSREYES26|QF|
-S|2025-09-18|Tampere Open|Challenger|Cap7ainMGF|QF|
-S|2025-09-18|Tampere Open|Challenger|MrAyluin|QF|
-S|2025-09-18|Tampere Open|Challenger|jjpunchercatpro2ban|QF|
-S|2025-09-18|Tampere Open|Challenger|killzoneshade|R16|
-S|2025-09-18|Tampere Open|Challenger|megacardealer|R16|
-S|2025-09-18|Tampere Open|Challenger|RavageXVII|R16|
-S|2025-09-18|Tampere Open|Challenger|CarKostas|R16|
-S|2025-09-18|Tampere Open|Challenger|NoCapDroon|R16|
-S|2025-09-18|Tampere Open|Challenger|exulan2|R16|
-S|2025-09-18|Tampere Open|Challenger|Silver_Shelf|R16|
-S|2025-09-18|Tampere Open|Challenger|ddmg1|R16|
-S|2025-09-18|Tampere Open|Challenger|samu2403|R32|
 S|2025-05-24|Rome Open|Masters|policeCOKE1|W|
 S|2025-05-24|Rome Open|Masters|Zevillox|F|
 S|2025-05-24|Rome Open|Masters|spiderporc1|SF|
@@ -1115,6 +1064,1338 @@ S|2025-07-08|ARTP Finals S6|Finals|policeCOKE1|RR||100
 S|2025-07-08|ARTP Finals S6|Finals|Lengku012|RR||0
 S|2025-07-08|ARTP Finals S6|Finals|Wyillis|RR||100
 S|2025-07-08|ARTP Finals S6|Finals|Zevillox|RR||0
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|trollaso3089|W|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Lengku012|F|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Ambitiouscalebb|SF|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|ytlavaawesomeness|SF|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|FloTag|QF|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Aspiringediwow123|QF|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Marcin2590|QF|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Bugerzan|QF|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|policeCOKE1|R16|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Avant82|R16|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Proxy10_1|R16|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|NarrowLmao|R16|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Ja1th|R16|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|BergeVo|R16|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|darthezrah7|R16|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Zevillox|R16|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|CommanderHistorian|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|zIostx|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Caivhin|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Ehnidz|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|SlowMo_PL|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|ii_Dreadlord|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Illumitronix|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|BreezxXy|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Lilman_95|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|LuvisCalm|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Lygoh1|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|MoonTheGoon1|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|VitaMorningstar|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|WolfHackXVI|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|GamingBaconMeNo|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|R2D29998|R32|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|apurbo124|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|hei426|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|matmatski|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|TheFerrariMasterPlan|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|manuelandres2010|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Ziadgamer2021xd|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|YT_ManofdreamsGaming|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|LST_Snipers|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|thewishdonator1|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Ni_vX|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|vAin0|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|clawthxrne|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|LitoSousa10|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|CristyValentin_2005|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|MrAyluin|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|heroov|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|jadegamerz0909|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|FNF2831|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|JorusRetorak|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|67ez|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Amgoingtofollowurn|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|bellazebub|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|killerkid097|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|LittleDaryl|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Mr_RobloxHuman|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Seff_Optik|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Aareilly|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Ancinet_Finley|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Orphicelix|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|pufcjoe|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Somebodyintheworld_1|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|tah6i4krx9rrt0s24kiz|R64|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Adopew|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|RioBiskvit34|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|LadiesMan217|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|RBL_Yurizinn|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Cerezooo|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|STSPROPLAYER1234|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|avnerhik890|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Thinblueforever|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|MaiNcze|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|deplicious|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|donaIdduckl|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|N0tAimZ|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|amfaujfm2uh|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Anaweel|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|NINJA_84636|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|kenzgi|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|oouuiid|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|BOX_G0D|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|spiderporc1|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|te01e|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|D_Ismail01|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Mahoiku|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|AlesioGamer12|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|JMoneyWitDaBlic|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|david_3259413|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|AverageAlx123|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|flozuy|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Gmoney3281|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|JetChunky|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|Maqcklu|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|vSu_per|R128|
+S|2024-07-17|Wimbledon Championships 2024|Grand Slam|zpidey16|R128|
+S|2024-11-18|Gijon Open 2024|250|Lengku012|W|
+S|2024-11-18|Gijon Open 2024|250|indkol22|F|
+S|2024-11-18|Gijon Open 2024|250|ilyAnashei|SF|
+S|2024-11-18|Gijon Open 2024|250|Marcin2590|SF|
+S|2024-11-18|Gijon Open 2024|250|policeCOKE1|QF|
+S|2024-11-18|Gijon Open 2024|250|avnerhik890|QF|
+S|2024-11-18|Gijon Open 2024|250|manuelandres2010|QF|
+S|2024-11-18|Gijon Open 2024|250|MoonTheGoon1|QF|
+S|2024-11-18|Gijon Open 2024|250|Avant82|R16|
+S|2024-11-18|Gijon Open 2024|250|UN55915161|R16|
+S|2024-11-18|Gijon Open 2024|250|LST_Snipers|R16|
+S|2024-11-18|Gijon Open 2024|250|Cristy_Valentin|R16|
+S|2024-11-18|Gijon Open 2024|250|JMoneyWitDaBlic|R16|
+S|2024-11-18|Gijon Open 2024|250|ksdvgaa|R16|
+S|2024-11-18|Gijon Open 2024|250|fennecenfox|R16|
+S|2024-11-18|Gijon Open 2024|250|patrickomg6785|R16|
+S|2024-11-18|Gijon Open 2024|250|WlLLRB|R32|
+S|2024-11-18|Gijon Open 2024|250|SimPlaysRblxYt|R32|
+S|2024-11-18|Gijon Open 2024|250|MasalaHater|R32|
+S|2024-11-18|Gijon Open 2024|250|PiesekMC|R32|
+S|2024-11-18|Gijon Open 2024|250|gonyws|R32|
+S|2024-11-18|Gijon Open 2024|250|mepzzoctb|R32|
+S|2024-11-18|Gijon Open 2024|250|iDxrken|R32|
+S|2024-11-18|Gijon Open 2024|250|haiyu09|R32|
+S|2024-11-18|Moselle Open 2024|250|Wyillis|W|
+S|2024-11-18|Moselle Open 2024|250|AmbitiousCalebb|F|
+S|2024-11-18|Moselle Open 2024|250|SlowMo_PL|SF|
+S|2024-11-18|Moselle Open 2024|250|ii_Dreadlord|SF|
+S|2024-11-18|Moselle Open 2024|250|goIdfyre|QF|
+S|2024-11-18|Moselle Open 2024|250|LittleDaryl|QF|
+S|2024-11-18|Moselle Open 2024|250|Aareilly|QF|
+S|2024-11-18|Moselle Open 2024|250|steezvs|QF|
+S|2024-11-18|Moselle Open 2024|250|NotTrueFoodis|R16|
+S|2024-11-18|Moselle Open 2024|250|CommanderHistorian|R16|
+S|2024-11-18|Moselle Open 2024|250|FloTag|R16|
+S|2024-11-18|Moselle Open 2024|250|mee_jan|R16|
+S|2024-11-18|Moselle Open 2024|250|bl4ze_015|R16|
+S|2024-11-18|Moselle Open 2024|250|trollaso3089|R16|
+S|2024-11-18|Moselle Open 2024|250|Luckyvzz|R16|
+S|2024-11-18|Moselle Open 2024|250|darthezrah7|R16|
+S|2024-11-18|Moselle Open 2024|250|TheGhostOfToxic|R32|
+S|2024-11-18|Moselle Open 2024|250|seanafk23|R32|
+S|2024-11-18|Moselle Open 2024|250|FrostyLeeJr|R32|
+S|2024-11-18|Moselle Open 2024|250|o7Akira|R32|
+S|2024-11-09|Seoul Open 2024|Challenger|Wyillis|W|
+S|2024-11-09|Seoul Open 2024|Challenger|NotTrueFoodis|F|
+S|2024-11-09|Seoul Open 2024|Challenger|avnerhik890|SF|
+S|2024-11-09|Seoul Open 2024|Challenger|SimPlaysRblxYt|SF|
+S|2024-11-09|Seoul Open 2024|Challenger|svist75|QF|
+S|2024-11-09|Seoul Open 2024|Challenger|MasalaHater|QF|
+S|2024-11-09|Seoul Open 2024|Challenger|Luckyvzz|QF|
+S|2024-11-09|Seoul Open 2024|Challenger|mepzzoctb|QF|
+S|2024-11-09|Seoul Open 2024|Challenger|sflynt|R16|
+S|2024-11-09|Seoul Open 2024|Challenger|steppa_68|R16|
+S|2024-11-09|Seoul Open 2024|Challenger|Creative_Jas0n|R16|
+S|2024-11-09|Seoul Open 2024|Challenger|mee_jan|R16|
+S|2024-11-09|Seoul Open 2024|Challenger|LST_Snipers|R16|
+S|2024-11-09|Seoul Open 2024|Challenger|GamerInTownIsHere|R16|
+S|2024-11-09|Seoul Open 2024|Challenger|PiesekMC|R16|
+S|2024-11-09|Seoul Open 2024|Challenger|gonyws|R16|
+S|2024-10-15|Erste Bank Open 2024|500|SlowMo_PL|W|
+S|2024-10-15|Erste Bank Open 2024|500|ii_Dreadlord|F|
+S|2024-10-15|Erste Bank Open 2024|500|policeCOKE1|SF|
+S|2024-10-15|Erste Bank Open 2024|500|trollaso3089|SF|
+S|2024-10-15|Erste Bank Open 2024|500|manuelandres2010|QF|
+S|2024-10-15|Erste Bank Open 2024|500|MoonTheGoon1|QF|
+S|2024-10-15|Erste Bank Open 2024|500|JMoneyWitDaBlic|QF|
+S|2024-10-15|Erste Bank Open 2024|500|indkol22|QF|
+S|2024-10-15|Erste Bank Open 2024|500|avnerhik890|R16|
+S|2024-10-15|Erste Bank Open 2024|500|flavietto2018|R16|
+S|2024-10-15|Erste Bank Open 2024|500|Avant82|R16|
+S|2024-10-15|Erste Bank Open 2024|500|steppa_68|R16|
+S|2024-10-15|Erste Bank Open 2024|500|NarrowLmao|R16|
+S|2024-10-15|Erste Bank Open 2024|500|Cristy_Valentin|R16|
+S|2024-10-15|Erste Bank Open 2024|500|Bugerzan|R16|
+S|2024-10-15|Erste Bank Open 2024|500|PoopyChickenNuggets|R16|
+S|2024-10-15|Erste Bank Open 2024|500|valerisnake|R32|
+S|2024-10-15|Erste Bank Open 2024|500|Ziadgamer2021xd|R32|
+S|2024-10-15|Erste Bank Open 2024|500|Creative_Jas0n|R32|
+S|2024-10-15|Erste Bank Open 2024|500|mee_jan|R32|
+S|2024-10-15|Erste Bank Open 2024|500|TheLilBeefKebab|R32|
+S|2024-10-15|Erste Bank Open 2024|500|SimPlaysRblxYt|R32|
+S|2024-10-15|Erste Bank Open 2024|500|Kubcio12346|R32|
+S|2024-10-15|Erste Bank Open 2024|500|Luckyvzz|R32|
+S|2024-10-15|Erste Bank Open 2024|500|ksdvgaa|R32|
+S|2024-10-15|Erste Bank Open 2024|500|acqu4inted|R32|
+S|2024-10-18|Japan Open 2024|500|AmbitiousCalebb|W|
+S|2024-10-18|Japan Open 2024|500|Marcin2590|F|
+S|2024-10-18|Japan Open 2024|500|Wyillis|SF|
+S|2024-10-18|Japan Open 2024|500|Lengku012|SF|
+S|2024-10-18|Japan Open 2024|500|FloTag|QF|
+S|2024-10-18|Japan Open 2024|500|bl4ze_015|QF|
+S|2024-10-18|Japan Open 2024|500|haiyu09|QF|
+S|2024-10-18|Japan Open 2024|500|Xitz2020|QF|
+S|2024-10-18|Japan Open 2024|500|UN55915161|R16|
+S|2024-10-18|Japan Open 2024|500|LST_Snipers|R16|
+S|2024-10-18|Japan Open 2024|500|Ilyanashei|R16|
+S|2024-10-18|Japan Open 2024|500|fennecenfox|R16|
+S|2024-10-18|Japan Open 2024|500|flozuy|R16|
+S|2024-10-18|Japan Open 2024|500|ytlavaawesomeness|R16|
+S|2024-10-18|Japan Open 2024|500|zenobwia|R16|
+S|2024-10-18|Japan Open 2024|500|Aareilly|R16|
+S|2024-10-18|Japan Open 2024|500|PiesekMC|R32|
+S|2024-10-18|Japan Open 2024|500|xxmaximxx15|R32|
+D|2024-11-03|Swiss Indoors Open 2024|500|ilovetennis678|W|AndrewLuvzGod
+D|2024-11-03|Swiss Indoors Open 2024|500|AndrewLuvzGod|W|ilovetennis678
+D|2024-11-03|Swiss Indoors Open 2024|500|Ambitiouscalebb|F|indkol22
+D|2024-11-03|Swiss Indoors Open 2024|500|indkol22|F|Ambitiouscalebb
+D|2024-11-03|Swiss Indoors Open 2024|500|Cristy_Valentin|SF|RussianTarkov
+D|2024-11-03|Swiss Indoors Open 2024|500|RussianTarkov|SF|Cristy_Valentin
+D|2024-11-03|Swiss Indoors Open 2024|500|ytlavaawesomeness|SF|darthezrah7
+D|2024-11-03|Swiss Indoors Open 2024|500|darthezrah7|SF|ytlavaawesomeness
+D|2024-11-03|Swiss Indoors Open 2024|500|Kobersur|QF|Jiaf3ipur
+D|2024-11-03|Swiss Indoors Open 2024|500|Jiaf3ipur|QF|Kobersur
+D|2024-11-03|Swiss Indoors Open 2024|500|goIdfyre|QF|steezvs
+D|2024-11-03|Swiss Indoors Open 2024|500|steezvs|QF|goIdfyre
+D|2024-11-03|Swiss Indoors Open 2024|500|aleks_rudnik|QF|SlowMo_PL
+D|2024-11-03|Swiss Indoors Open 2024|500|SlowMo_PL|QF|aleks_rudnik
+D|2024-11-03|Swiss Indoors Open 2024|500|Xitz2020|QF|Patrickomg6785
+D|2024-11-03|Swiss Indoors Open 2024|500|Patrickomg6785|QF|Xitz2020
+D|2024-11-03|Swiss Indoors Open 2024|500|flavietto2018|R16|al3kr123
+D|2024-11-03|Swiss Indoors Open 2024|500|al3kr123|R16|flavietto2018
+D|2024-11-03|Swiss Indoors Open 2024|500|albaricoque2609|R16|Voidicz
+D|2024-11-03|Swiss Indoors Open 2024|500|Voidicz|R16|albaricoque2609
+D|2024-11-03|Swiss Indoors Open 2024|500|manuelandres2010|R16|ksdvgaa
+D|2024-11-03|Swiss Indoors Open 2024|500|ksdvgaa|R16|manuelandres2010
+D|2024-11-03|Swiss Indoors Open 2024|500|MoonTheGoon1|R16|Zevillox
+D|2024-11-03|Swiss Indoors Open 2024|500|Zevillox|R16|MoonTheGoon1
+D|2024-11-03|Swiss Indoors Open 2024|500|Vodlad|R16|shark_kokonut
+D|2024-11-03|Swiss Indoors Open 2024|500|shark_kokonut|R16|Vodlad
+D|2024-11-03|Swiss Indoors Open 2024|500|Pankonikowski|R16|Halfidus_Alt
+D|2024-11-03|Swiss Indoors Open 2024|500|Halfidus_Alt|R16|Pankonikowski
+D|2024-11-03|Swiss Indoors Open 2024|500|ii_Dreadlord|R16|Trollaso3089
+D|2024-11-03|Swiss Indoors Open 2024|500|Trollaso3089|R16|ii_Dreadlord
+D|2024-11-03|Swiss Indoors Open 2024|500|Aareilly|R16|arqxovia
+D|2024-11-03|Swiss Indoors Open 2024|500|arqxovia|R16|Aareilly
+D|2024-11-03|Swiss Indoors Open 2024|500|mee_jan|R32|Creative_Jas0n
+D|2024-11-03|Swiss Indoors Open 2024|500|Creative_Jas0n|R32|mee_jan
+D|2024-11-03|Swiss Indoors Open 2024|500|PiesekMC|R32|Kubcio12346
+D|2024-11-03|Swiss Indoors Open 2024|500|Kubcio12346|R32|PiesekMC
+D|2024-11-03|Swiss Indoors Open 2024|500|Acqu4inted|R32|kawathecatt
+D|2024-11-03|Swiss Indoors Open 2024|500|kawathecatt|R32|Acqu4inted
+S|2024-10-03|Las Vegas Open 2024|Challenger|Steppa_68|W|
+S|2024-10-03|Las Vegas Open 2024|Challenger|Spiderporc1|F|
+S|2024-10-03|Las Vegas Open 2024|Challenger|avnerhik890|SF|
+S|2024-10-03|Las Vegas Open 2024|Challenger|PiesekMC|SF|
+S|2024-10-03|Las Vegas Open 2024|Challenger|Ziadgamer2021xd|QF|
+S|2024-10-03|Las Vegas Open 2024|Challenger|UN55915161|QF|
+S|2024-10-03|Las Vegas Open 2024|Challenger|Ksdvgaa|QF|
+S|2024-10-03|Las Vegas Open 2024|Challenger|ZameerMonk1|QF|
+S|2024-10-03|Las Vegas Open 2024|Challenger|CommanderHistorian|R16|
+S|2024-10-03|Las Vegas Open 2024|Challenger|FNF2831|R16|
+S|2024-10-03|Las Vegas Open 2024|Challenger|manuelandres2010|R16|
+S|2024-10-03|Las Vegas Open 2024|Challenger|Nathe_gameur|R16|
+S|2024-10-03|Las Vegas Open 2024|Challenger|LST_Snipers|R16|
+S|2024-10-03|Las Vegas Open 2024|Challenger|vAin0|R16|
+S|2024-10-03|Las Vegas Open 2024|Challenger|awnchiu|R16|
+S|2024-10-03|Las Vegas Open 2024|Challenger|PoopyChickenNuggets|R16|
+S|2024-10-03|Las Vegas Open 2024|Challenger|mangoisfire|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|popadrink|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|sflynt|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|Boi252525|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|samu2403|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|tinymaksud|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|BOX_GOD|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|alphapvpuser|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|Kubcio12346|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|maksymilandr007|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|N01D3AF0RANAM3|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|Preysto|R32|
+S|2024-10-03|Las Vegas Open 2024|Challenger|Skillshared|R32|
+D|2024-09-20|European Open 2024|250|AndrewLuvzGod|W|ilovetennis678
+D|2024-09-20|European Open 2024|250|ilovetennis678|W|AndrewLuvzGod
+D|2024-09-20|European Open 2024|250|WutYouMeanByThis|F|khaiedrai
+D|2024-09-20|European Open 2024|250|khaiedrai|F|WutYouMeanByThis
+D|2024-09-20|European Open 2024|250|goal_17|SF|egomyfego
+D|2024-09-20|European Open 2024|250|egomyfego|SF|goal_17
+D|2024-09-20|European Open 2024|250|aleks_rudnik|SF|SlowMo_PL
+D|2024-09-20|European Open 2024|250|SlowMo_PL|SF|aleks_rudnik
+D|2024-09-20|European Open 2024|250|MoonTheGoon1|QF|Zevillox
+D|2024-09-20|European Open 2024|250|Zevillox|QF|MoonTheGoon1
+D|2024-09-20|European Open 2024|250|Trollaso3089|QF|ii_Dreadlord
+D|2024-09-20|European Open 2024|250|ii_Dreadlord|QF|Trollaso3089
+D|2024-09-20|European Open 2024|250|Vodlad|QF|Twistoid
+D|2024-09-20|European Open 2024|250|Twistoid|QF|Vodlad
+D|2024-09-20|European Open 2024|250|Aareilly|QF|arqxovia
+D|2024-09-20|European Open 2024|250|arqxovia|QF|Aareilly
+D|2024-09-20|European Open 2024|250|Skatkat|R16|Halfidus_Alt
+D|2024-09-20|European Open 2024|250|Halfidus_Alt|R16|Skatkat
+D|2024-09-20|European Open 2024|250|Jiaf3ipur|R16|kobersur
+D|2024-09-20|European Open 2024|250|kobersur|R16|Jiaf3ipur
+D|2024-09-20|European Open 2024|250|NarrowLmao|R16|NubiiZard
+D|2024-09-20|European Open 2024|250|NubiiZard|R16|NarrowLmao
+D|2024-09-20|European Open 2024|250|Lengku012|R16|Ehnidz
+D|2024-09-20|European Open 2024|250|Ehnidz|R16|Lengku012
+D|2024-09-20|European Open 2024|250|CristyValentin_2005|R16|WalrusPunk
+D|2024-09-20|European Open 2024|250|WalrusPunk|R16|CristyValentin_2005
+D|2024-09-20|European Open 2024|250|1Blaz_e|R16|goIdfyre
+D|2024-09-20|European Open 2024|250|goIdfyre|R16|1Blaz_e
+D|2024-09-20|European Open 2024|250|ytlavaawesomeness|R16|darthezrah7
+D|2024-09-20|European Open 2024|250|darthezrah7|R16|ytlavaawesomeness
+D|2024-09-20|European Open 2024|250|steezvs|R16|LittleDaryl
+D|2024-09-20|European Open 2024|250|LittleDaryl|R16|steezvs
+D|2024-09-20|European Open 2024|250|flavietto2018|R32|al3kr123
+D|2024-09-20|European Open 2024|250|al3kr123|R32|flavietto2018
+D|2024-09-20|European Open 2024|250|FloTag|R32|DERETOURMOUAHAHAHA
+D|2024-09-20|European Open 2024|250|DERETOURMOUAHAHAHA|R32|FloTag
+D|2024-09-20|European Open 2024|250|tinymaksud|R32|stylishmahmud
+D|2024-09-20|European Open 2024|250|stylishmahmud|R32|tinymaksud
+D|2024-09-20|European Open 2024|250|Melodyzozo|R32|Ksdvgaa
+D|2024-09-20|European Open 2024|250|Ksdvgaa|R32|Melodyzozo
+D|2024-09-20|European Open 2024|250|AmbitiousCalebb|R32|GalacticPidgeon55
+D|2024-09-20|European Open 2024|250|GalacticPidgeon55|R32|AmbitiousCalebb
+S|2024-09-16|National Bank Open 2024|Masters|Lengku012|W|
+S|2024-09-16|National Bank Open 2024|Masters|ytlavaawesomeness|F|
+S|2024-09-16|National Bank Open 2024|Masters|policeCOKE1|SF|
+S|2024-09-16|National Bank Open 2024|Masters|steezvs|SF|
+S|2024-09-16|National Bank Open 2024|Masters|FloTag|QF|
+S|2024-09-16|National Bank Open 2024|Masters|MoonTheGoon1|QF|
+S|2024-09-16|National Bank Open 2024|Masters|Bxrtolini|QF|
+S|2024-09-16|National Bank Open 2024|Masters|Preysto|QF|
+S|2024-09-16|National Bank Open 2024|Masters|Steppa_68|R16|
+S|2024-09-16|National Bank Open 2024|Masters|popadrink|R16|
+S|2024-09-16|National Bank Open 2024|Masters|CommanderHistorian|R16|
+S|2024-09-16|National Bank Open 2024|Masters|DuckyIsNob|R16|
+S|2024-09-16|National Bank Open 2024|Masters|Ionlyfeel_sadness|R16|
+S|2024-09-16|National Bank Open 2024|Masters|NidaVelly|R16|
+S|2024-09-16|National Bank Open 2024|Masters|UN55915161|R16|
+S|2024-09-16|National Bank Open 2024|Masters|JMoneyWitDaBlic|R16|
+S|2024-09-16|National Bank Open 2024|Masters|valerisnake|R32|
+S|2024-09-16|National Bank Open 2024|Masters|manuelandres2010|R32|
+S|2024-09-16|National Bank Open 2024|Masters|DERETOURMOUAHAHAHA|R32|
+S|2024-09-16|National Bank Open 2024|Masters|tinymaksud|R32|
+S|2024-09-16|National Bank Open 2024|Masters|BOX_G0D|R32|
+S|2024-09-16|National Bank Open 2024|Masters|N01D3AF0RANAM3|R32|
+S|2024-09-16|National Bank Open 2024|Masters|FrostyLeeJr|R32|
+S|2024-09-16|National Bank Open 2024|Masters|whoisjonahh|R32|
+S|2024-09-16|National Bank Open 2024|Masters|xitz2020|R32|
+S|2024-09-16|National Bank Open 2024|Masters|orlaithtolono|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|trollaso3089|W|
+S|2024-09-16|Cincinnati Open 2024|Masters|ii_Dreadlord|F|
+S|2024-09-16|Cincinnati Open 2024|Masters|avnerhik890|SF|
+S|2024-09-16|Cincinnati Open 2024|Masters|SlowMo_PL|SF|
+S|2024-09-16|Cincinnati Open 2024|Masters|NarrowLmao|QF|
+S|2024-09-16|Cincinnati Open 2024|Masters|iDxrken|QF|
+S|2024-09-16|Cincinnati Open 2024|Masters|indkol22|QF|
+S|2024-09-16|Cincinnati Open 2024|Masters|Aareilly|QF|
+S|2024-09-16|Cincinnati Open 2024|Masters|BloodyLevii|R16|
+S|2024-09-16|Cincinnati Open 2024|Masters|fizz_raanini|R16|
+S|2024-09-16|Cincinnati Open 2024|Masters|spiderporc1|R16|
+S|2024-09-16|Cincinnati Open 2024|Masters|Death_SkullTV|R16|
+S|2024-09-16|Cincinnati Open 2024|Masters|Cristy_Valentin|R16|
+S|2024-09-16|Cincinnati Open 2024|Masters|ksdvgaa|R16|
+S|2024-09-16|Cincinnati Open 2024|Masters|maksymilandr007|R16|
+S|2024-09-16|Cincinnati Open 2024|Masters|awnchiu|R16|
+S|2024-09-16|Cincinnati Open 2024|Masters|mangoisfire|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|samu2403|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|Ziadgamer2021xd|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|FilippANO09|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|PiesekMC|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|DOOOOOOG2812|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|galaxking12345|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|RAANTON12|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|denzio321|R32|
+S|2024-09-16|Cincinnati Open 2024|Masters|kurmei1234560|R32|
+D|2024-08-18|Citi Open 2024|500|LuvisCalm|W|LeCarsnn
+D|2024-08-18|Citi Open 2024|500|LeCarsnn|W|LuvisCalm
+D|2024-08-18|Citi Open 2024|500|ytlavaawesomeness|F|darthezrah7
+D|2024-08-18|Citi Open 2024|500|darthezrah7|F|ytlavaawesomeness
+D|2024-08-18|Citi Open 2024|500|T14_Mist|SF|vxToad
+D|2024-08-18|Citi Open 2024|500|vxToad|SF|T14_Mist
+D|2024-08-18|Citi Open 2024|500|Zevillox|SF|MoonTheGoon1
+D|2024-08-18|Citi Open 2024|500|MoonTheGoon1|SF|Zevillox
+D|2024-08-18|Citi Open 2024|500|Lengku012|QF|khaiedrai
+D|2024-08-18|Citi Open 2024|500|khaiedrai|QF|Lengku012
+D|2024-08-18|Citi Open 2024|500|Twistoid|QF|Vodlad
+D|2024-08-18|Citi Open 2024|500|Vodlad|QF|Twistoid
+D|2024-08-18|Citi Open 2024|500|AndrewLuvzGod|QF|ilovetennis678
+D|2024-08-18|Citi Open 2024|500|ilovetennis678|QF|AndrewLuvzGod
+D|2024-08-18|Citi Open 2024|500|Aareilly|QF|arqxovia
+D|2024-08-18|Citi Open 2024|500|arqxovia|QF|Aareilly
+D|2024-08-18|Citi Open 2024|500|adaptDE|R16|ii_DreadLord
+D|2024-08-18|Citi Open 2024|500|ii_DreadLord|R16|adaptDE
+D|2024-08-18|Citi Open 2024|500|GiacomoB8|R16|Tigicol
+D|2024-08-18|Citi Open 2024|500|Tigicol|R16|GiacomoB8
+D|2024-08-18|Citi Open 2024|500|greatpie123|R16|1kopt
+D|2024-08-18|Citi Open 2024|500|1kopt|R16|greatpie123
+D|2024-08-18|Citi Open 2024|500|AmbitiousCalebb|R16|Nebula
+D|2024-08-18|Citi Open 2024|500|Nebula|R16|AmbitiousCalebb
+D|2024-08-18|Citi Open 2024|500|aleks_rudnik|R16|SlowMo_PL
+D|2024-08-18|Citi Open 2024|500|SlowMo_PL|R16|aleks_rudnik
+D|2024-08-18|Citi Open 2024|500|CristyValentin_2005|R16|WalrusPunk
+D|2024-08-18|Citi Open 2024|500|WalrusPunk|R16|CristyValentin_2005
+D|2024-08-18|Citi Open 2024|500|RunnerVeDSG|R16|RunnerDavidSG
+D|2024-08-18|Citi Open 2024|500|RunnerDavidSG|R16|RunnerVeDSG
+D|2024-08-18|Citi Open 2024|500|flozuy|R16|FloTag
+D|2024-08-18|Citi Open 2024|500|FloTag|R16|flozuy
+D|2024-08-18|Citi Open 2024|500|benjacompu6574|R32|IaMxKhilef
+D|2024-08-18|Citi Open 2024|500|IaMxKhilef|R32|benjacompu6574
+D|2024-08-18|Citi Open 2024|500|JMoneyWitDaBlic|R32|Notheterz50
+D|2024-08-18|Citi Open 2024|500|Notheterz50|R32|JMoneyWitDaBlic
+D|2024-08-18|Citi Open 2024|500|macmilllerr|R32|jujujulia23487
+D|2024-08-18|Citi Open 2024|500|jujujulia23487|R32|macmilllerr
+D|2024-08-18|Citi Open 2024|500|CommanderHistorian|R32|BreezyAmazingtray
+D|2024-08-18|Citi Open 2024|500|BreezyAmazingtray|R32|CommanderHistorian
+D|2024-08-18|Citi Open 2024|500|goal_17|R32|egomyfego
+D|2024-08-18|Citi Open 2024|500|egomyfego|R32|goal_17
+D|2024-08-18|Citi Open 2024|500|MarsObelyn|R32|LinxStransburg
+D|2024-08-18|Citi Open 2024|500|LinxStransburg|R32|MarsObelyn
+D|2024-08-18|Citi Open 2024|500|Jiaf3ipur|R32|Kobersur
+D|2024-08-18|Citi Open 2024|500|Kobersur|R32|Jiaf3ipur
+D|2024-08-18|Citi Open 2024|500|tinymaksud|R32|stylishmahmud
+D|2024-08-18|Citi Open 2024|500|stylishmahmud|R32|tinymaksud
+D|2024-08-18|Citi Open 2024|500|Proxy10_1|R32|RicFlair_Nick
+D|2024-08-18|Citi Open 2024|500|RicFlair_Nick|R32|Proxy10_1
+D|2024-08-18|Citi Open 2024|500|krabats605908605|R32|RcketEagle7
+D|2024-08-18|Citi Open 2024|500|RcketEagle7|R32|krabats605908605
+D|2024-08-18|Citi Open 2024|500|ilyAnashei|R32|policeCOKE1
+D|2024-08-18|Citi Open 2024|500|policeCOKE1|R32|ilyAnashei
+D|2024-08-18|Citi Open 2024|500|clawthxrne|R32|ERR0RZVY
+D|2024-08-18|Citi Open 2024|500|ERR0RZVY|R32|clawthxrne
+D|2024-08-18|Citi Open 2024|500|shadaurr|R32|Tomson_3000
+D|2024-08-18|Citi Open 2024|500|Tomson_3000|R32|shadaurr
+D|2024-08-18|Citi Open 2024|500|xxmaximxx15|R32|N01D3AF0RANAM3
+D|2024-08-18|Citi Open 2024|500|N01D3AF0RANAM3|R32|xxmaximxx15
+D|2024-08-18|Citi Open 2024|500|AwhLol3|R32|cartboy49
+D|2024-08-18|Citi Open 2024|500|cartboy49|R32|AwhLol3
+D|2024-08-18|Citi Open 2024|500|Restative|R32|JorusRetorak
+D|2024-08-18|Citi Open 2024|500|JorusRetorak|R32|Restative
+D|2024-08-18|Citi Open 2024|500|zyArthxr|R64|asd52hoho
+D|2024-08-18|Citi Open 2024|500|asd52hoho|R64|zyArthxr
+D|2024-08-18|Citi Open 2024|500|OfficalGet|R64|Mati4000PL
+D|2024-08-18|Citi Open 2024|500|Mati4000PL|R64|OfficalGet
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Nxbxula|W|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|LST_Snipers|F|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Bugerzan|SF|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|vennkko|SF|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|JMoneyWitDaBlic|QF|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|AlmightyInfernos|QF|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Ziadgamer2021xd|QF|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Ni_vX|QF|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|macmilllerr|R16|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|CommanderHistorian|R16|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|ahmedmomoa|R16|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|UN55915161|R16|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|bellazebub|R16|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|hockeymaster209|R16|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|o7Akira|R16|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|CafePretzel|R16|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|owl1609|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|benjacompu6574|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|M1rc4s|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|ocean_boop|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|x383mo|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|TreyxBurke|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|NINJA_84636|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Soniclem2|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|chickenbot900|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|NidaVelly|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|George892010|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Gator925|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Salami_Skin|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Treasur1_1|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|Tylad8|R32|
+S|2024-08-22|Rafa Nadal Open 2024|Challenger|ZameerMonk1|R32|
+S|2024-08-17|Chengdu Open 2024|250|Lengku012|W|
+S|2024-08-17|Chengdu Open 2024|250|ytlavaawesomeness|F|
+S|2024-08-17|Chengdu Open 2024|250|policeCOKE1|SF|
+S|2024-08-17|Chengdu Open 2024|250|Marcin2590|SF|
+S|2024-08-17|Chengdu Open 2024|250|clawthxrne|QF|
+S|2024-08-17|Chengdu Open 2024|250|greenerry|QF|
+S|2024-08-17|Chengdu Open 2024|250|Zevillox|QF|
+S|2024-08-17|Chengdu Open 2024|250|Aareilly|QF|
+S|2024-08-17|Chengdu Open 2024|250|TheGhostOfToxic|R16|
+S|2024-08-17|Chengdu Open 2024|250|macmilllerr|R16|
+S|2024-08-17|Chengdu Open 2024|250|x383mo|R16|
+S|2024-08-17|Chengdu Open 2024|250|Proxy10_1|R16|
+S|2024-08-17|Chengdu Open 2024|250|UN55915161|R16|
+S|2024-08-17|Chengdu Open 2024|250|ilyanashei|R16|
+S|2024-08-17|Chengdu Open 2024|250|CristyValentin_2005|R16|
+S|2024-08-17|Chengdu Open 2024|250|LeCarsnn|R16|
+S|2024-08-17|Chengdu Open 2024|250|zyArthxr|R32|
+S|2024-08-17|Chengdu Open 2024|250|JoNoLukyyy|R32|
+S|2024-08-17|Chengdu Open 2024|250|Radek_RBLX|R32|
+S|2024-08-17|Chengdu Open 2024|250|NINJA_84636|R32|
+S|2024-08-17|Chengdu Open 2024|250|tinymaksud|R32|
+S|2024-08-17|Chengdu Open 2024|250|FOHCAIA|R32|
+S|2024-08-17|Chengdu Open 2024|250|AmbitiousCalebb|R32|
+S|2024-08-17|Chengdu Open 2024|250|George892010|R32|
+S|2024-08-17|Chengdu Open 2024|250|ksdvgaa|R32|
+S|2024-08-17|Chengdu Open 2024|250|confusionisdelusion|R32|
+S|2024-08-17|Chengdu Open 2024|250|flozuy|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|NarrowLmao|W|
+S|2024-08-17|Winston-Salem Open 2024|250|SlowMo_PL|F|
+S|2024-08-17|Winston-Salem Open 2024|250|ii_Dreadlord|SF|
+S|2024-08-17|Winston-Salem Open 2024|250|luviscalm|SF|
+S|2024-08-17|Winston-Salem Open 2024|250|FloTag|QF|
+S|2024-08-17|Winston-Salem Open 2024|250|Bugerzan|QF|
+S|2024-08-17|Winston-Salem Open 2024|250|darthezrah7|QF|
+S|2024-08-17|Winston-Salem Open 2024|250|MoonTheGoon1|QF|
+S|2024-08-17|Winston-Salem Open 2024|250|JMoneyWitDaBlic|R16|
+S|2024-08-17|Winston-Salem Open 2024|250|avnerhik890|R16|
+S|2024-08-17|Winston-Salem Open 2024|250|CommanderHistorian|R16|
+S|2024-08-17|Winston-Salem Open 2024|250|goal_17|R16|
+S|2024-08-17|Winston-Salem Open 2024|250|adaptDE|R16|
+S|2024-08-17|Winston-Salem Open 2024|250|RunnerVeDSG|R16|
+S|2024-08-17|Winston-Salem Open 2024|250|hvnstarz|R16|
+S|2024-08-17|Winston-Salem Open 2024|250|xitz2020|R16|
+S|2024-08-17|Winston-Salem Open 2024|250|flavietto2018|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|ahmedmomoa|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|fizz_raanini|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|manuelandres2010|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|Chickenbot900|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|bl4ze_015|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|BOX_G0D|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|Simply_ksm|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|LST_Snipers|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|Ja1th|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|xxmaximxx15|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|bellazebub|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|hockeymaster209|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|k_ahdop|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|N01D3AF0RANAM3|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|Nxbxula|R32|
+S|2024-08-17|Winston-Salem Open 2024|250|benjacompu6574|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|popadrink|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|iceyy_gio|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|matheus113211|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|RBL_Yurizinn|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|zyArthxr|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|oceanboop|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|JoNoLukyyy|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Radek_RBLX|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Tigicol|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|GiacomoB8|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Shayk19|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Kyouryuger12346|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Oginskis1|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Mati4000PL|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|OfficalGet|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Gator925|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|acqu4inted|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Brentaboy|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Salami_Skin|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|Tylad8|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|ZameerMonk1|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|CafePretzel|R64|
+S|2024-08-17|Winston-Salem Open 2024|250|olisitzz|R64|
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|ilovetennis678|W|KaguyaShinomiya
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|KaguyaShinomiya|W|ilovetennis678
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|greatpie123|F|1kopt
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|1kopt|F|greatpie123
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|aleks_rudnik|SF|SlowMo_PL
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|SlowMo_PL|SF|aleks_rudnik
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|monkeyninja505|SF|lava
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|lava|SF|monkeyninja505
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|NarrowLmao|QF|Lengku012
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Lengku012|QF|NarrowLmao
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|AndrewLuvzGod|QF|LittleDaryl
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|LittleDaryl|QF|AndrewLuvzGod
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|BreezxXy|QF|1Blaz_e
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|1Blaz_e|QF|BreezxXy
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|T14_Mist|QF|vxToad
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|vxToad|QF|T14_Mist
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|CommanderHistorian|R16|BreezyAmazingtray
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|BreezyAmazingtray|R16|CommanderHistorian
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Skatkat|R16|Halfidus_Alt
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Halfidus_Alt|R16|Skatkat
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Vodlad|R16|shark_kokonut
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|shark_kokonut|R16|Vodlad
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|CristyValentin_2005|R16|Avant82
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Avant82|R16|CristyValentin_2005
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|67ez|R16|darthezrah7
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|darthezrah7|R16|67ez
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|MoonTheGoon1|R16|Mr_RobloxHuman
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Mr_RobloxHuman|R16|MoonTheGoon1
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Slashhim123|R16|Phothious
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Phothious|R16|Slashhim123
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|WolfHackXVI|R16|ii_DreadLord
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|ii_DreadLord|R16|WolfHackXVI
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|DonaIdDuckl|R32|TuFeRss
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|TuFeRss|R32|DonaIdDuckl
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|matmatski|R32|jpnich10
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|jpnich10|R32|matmatski
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|iLuvRequis|R32|Kxstyc
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Kxstyc|R32|iLuvRequis
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Proxy10_1|R32|Aareilly
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Aareilly|R32|Proxy10_1
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|BOX_G0D|R32|Ancient_Finley
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Ancient_Finley|R32|BOX_G0D
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|icanburnbedrock|R32|Nubiizard
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Nubiizard|R32|icanburnbedrock
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Outlory|R32|1imelaps
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|1imelaps|R32|Outlory
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|ArnoldTLincoln|R32|GabeTLincoln
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|GabeTLincoln|R32|ArnoldTLincoln
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|johnjohnjohnjohn1785|R32|sqehun
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|sqehun|R32|johnjohnjohnjohn1785
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|cartboy49|R32|AwhLol3
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|AwhLol3|R32|cartboy49
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|heroov|R32|apurbo124
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|apurbo124|R32|heroov
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Poptartcake1|R32|ApexWhale96backwards
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|ApexWhale96backwards|R32|Poptartcake1
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|JetChunky|R32|3litemani5
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|3litemani5|R32|JetChunky
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|LeCarsnn|R32|goal_17
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|goal_17|R32|LeCarsnn
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|maqcklu|R32|PoopyChickenNuggets
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|PoopyChickenNuggets|R32|maqcklu
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|xHxntxr|R32|markythesharkyyy
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|markythesharkyyy|R32|xHxntxr
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|guilhertopgamer|R64|stave_balanom
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|stave_balanom|R64|guilhertopgamer
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|12yoni23|R64|fizz_raanini
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|fizz_raanini|R64|12yoni23
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Ziadgamer2021xd|R64|FNF2831
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|FNF2831|R64|Ziadgamer2021xd
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|NicolaxitoDev|R64|fakeanjeni134
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|fakeanjeni134|R64|NicolaxitoDev
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|krabats605908605|R64|RcketEagle7
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|RcketEagle7|R64|krabats605908605
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Ni_vX|R64|Hei426
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Hei426|R64|Ni_vX
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|a6nda|R64|eviluded
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|eviluded|R64|a6nda
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Ovkuu|R64|GreenBeanser
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|GreenBeanser|R64|Ovkuu
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|Pur3Casualty|R64|PotCasualty
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|PotCasualty|R64|Pur3Casualty
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|FrankJCaracci|R64|OrphicElix
+D|2024-07-23|Wimbledon Championships 2024|Grand Slam|OrphicElix|R64|FrankJCaracci
+S|2024-06-05|Mutua Madrid Open 2024|Masters|Caivhin|W|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|ytlavaawesomeness|F|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|SlowMo_PL|SF|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|MoonTheGoon1|SF|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|Avant82|QF|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|clawthxrne|QF|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|0rangesyt|QF|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|ItssMeHG|QF|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|cloudzeno|R16|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|TheFerrariMasterPlan|R16|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|01kAnxto|R16|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|3Norty|R16|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|Proxy10_1|R16|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|CristyValentin_2005|R16|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|dmksa123|R16|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|luviscalm|R16|
+S|2024-06-05|Mutua Madrid Open 2024|Masters|whoareyoubecau|R32|
+S|2024-06-01|Rome Open 2024|Masters|trollaso3089|W|
+S|2024-06-01|Rome Open 2024|Masters|Lengku012|F|
+S|2024-06-01|Rome Open 2024|Masters|Marcin2590|SF|
+S|2024-06-01|Rome Open 2024|Masters|BergeVo|SF|
+S|2024-06-01|Rome Open 2024|Masters|FloTag|QF|
+S|2024-06-01|Rome Open 2024|Masters|NarrowLmao|QF|
+S|2024-06-01|Rome Open 2024|Masters|Aryentei|QF|
+S|2024-06-01|Rome Open 2024|Masters|rstennisplayer443|QF|
+S|2024-06-01|Rome Open 2024|Masters|CommanderHistorian|R16|
+S|2024-06-01|Rome Open 2024|Masters|Pizza_alBalsamo15|R16|
+S|2024-06-01|Rome Open 2024|Masters|OmerTincel44|R16|
+S|2024-06-01|Rome Open 2024|Masters|Amgoingtofollowurn|R16|
+S|2024-06-01|Rome Open 2024|Masters|indkol22|R16|
+S|2024-06-01|Rome Open 2024|Masters|Lilman_95|R16|
+S|2024-06-01|Rome Open 2024|Masters|Lygoh1|R16|
+S|2024-06-01|Rome Open 2024|Masters|Zevillox|R16|
+S|2024-06-01|Rome Open 2024|Masters|SoYouHaveChosenDeath|R32|
+S|2024-06-01|Rome Open 2024|Masters|BjorgMilk|R32|
+S|2024-06-01|Rome Open 2024|Masters|ok53h|R32|
+S|2024-06-01|Rome Open 2024|Masters|r_yzzx|R32|
+S|2024-06-01|Rome Open 2024|Masters|HypnosFenrir|R32|
+S|2024-06-01|Rome Open 2024|Masters|lugi51067|R32|
+S|2024-06-01|Rome Open 2024|Masters|LST_Snipers|R32|
+S|2024-06-01|Rome Open 2024|Masters|shadaurr|R32|
+S|2024-06-01|Rome Open 2024|Masters|1packofwhoppers|R32|
+S|2024-06-01|Rome Open 2024|Masters|EyeownBiackMainAcc|R32|
+S|2024-06-01|Rome Open 2024|Masters|floodcrazy2|R32|
+S|2024-06-01|Rome Open 2024|Masters|KingBtwww|R32|
+S|2024-06-01|Rome Open 2024|Masters|oz_y|R32|
+S|2024-06-01|Rome Open 2024|Masters|SuperblueAustin|R32|
+S|2024-06-01|Rome Open 2024|Masters|TheAltOfSuperAlts|R32|
+S|2024-06-01|Rome Open 2024|Masters|wyve_rns|R32|
+S|2024-06-01|Rome Open 2024|Masters|AbcRainbow1223|R64|
+S|2024-06-01|Rome Open 2024|Masters|onelobster|R64|
+D|2024-04-27|Barcelona Masters 2024|Masters|ilovetennis678|W|KaguyaShinomiya
+D|2024-04-27|Barcelona Masters 2024|Masters|KaguyaShinomiya|W|ilovetennis678
+D|2024-04-27|Barcelona Masters 2024|Masters|ytlavaawesomeness|F|indkol22
+D|2024-04-27|Barcelona Masters 2024|Masters|indkol22|F|ytlavaawesomeness
+D|2024-04-27|Barcelona Masters 2024|Masters|1Blaz_e|SF|vxToad
+D|2024-04-27|Barcelona Masters 2024|Masters|vxToad|SF|1Blaz_e
+D|2024-04-27|Barcelona Masters 2024|Masters|CristyValentin_2005|SF|Avant82
+D|2024-04-27|Barcelona Masters 2024|Masters|Avant82|SF|CristyValentin_2005
+D|2024-04-27|Barcelona Masters 2024|Masters|nmcconnell12|QF|Proxy10_1
+D|2024-04-27|Barcelona Masters 2024|Masters|Proxy10_1|QF|nmcconnell12
+D|2024-04-27|Barcelona Masters 2024|Masters|trollaso3089|QF|Slowmo_PL
+D|2024-04-27|Barcelona Masters 2024|Masters|Slowmo_PL|QF|trollaso3089
+D|2024-04-27|Barcelona Masters 2024|Masters|Aryentei|QF|Calvhin
+D|2024-04-27|Barcelona Masters 2024|Masters|Calvhin|QF|Aryentei
+D|2024-04-27|Barcelona Masters 2024|Masters|Nxbxula|QF|hockeymaster209
+D|2024-04-27|Barcelona Masters 2024|Masters|hockeymaster209|QF|Nxbxula
+D|2024-04-27|Barcelona Masters 2024|Masters|akseiii|R16|offnded
+D|2024-04-27|Barcelona Masters 2024|Masters|offnded|R16|akseiii
+D|2024-04-27|Barcelona Masters 2024|Masters|gamerterrivel200|R16|XDMatheuzinXD
+D|2024-04-27|Barcelona Masters 2024|Masters|XDMatheuzinXD|R16|gamerterrivel200
+D|2024-04-27|Barcelona Masters 2024|Masters|matmatski|R16|jpnich10
+D|2024-04-27|Barcelona Masters 2024|Masters|jpnich10|R16|matmatski
+D|2024-04-27|Barcelona Masters 2024|Masters|GamingWolf010|R16|famer54fame
+D|2024-04-27|Barcelona Masters 2024|Masters|famer54fame|R16|GamingWolf010
+D|2024-04-27|Barcelona Masters 2024|Masters|randmguy1233|R16|marcin
+D|2024-04-27|Barcelona Masters 2024|Masters|marcin|R16|randmguy1233
+D|2024-04-27|Barcelona Masters 2024|Masters|alienrchie|R16|smecherul079
+D|2024-04-27|Barcelona Masters 2024|Masters|smecherul079|R16|alienrchie
+D|2024-04-27|Barcelona Masters 2024|Masters|LuvisCalm|R16|LostInSalt
+D|2024-04-27|Barcelona Masters 2024|Masters|LostInSalt|R16|LuvisCalm
+D|2024-04-27|Barcelona Masters 2024|Masters|Zevillox|R16|1robloxboy29
+D|2024-04-27|Barcelona Masters 2024|Masters|1robloxboy29|R16|Zevillox
+D|2024-04-27|Barcelona Masters 2024|Masters|CommanderHistorian|R32|BreezyAmazingtray
+D|2024-04-27|Barcelona Masters 2024|Masters|BreezyAmazingtray|R32|CommanderHistorian
+D|2024-04-27|Barcelona Masters 2024|Masters|yxdann|R32|iou_is
+D|2024-04-27|Barcelona Masters 2024|Masters|iou_is|R32|yxdann
+D|2024-04-27|Barcelona Masters 2024|Masters|zugak_top|R32|Yto4a
+D|2024-04-27|Barcelona Masters 2024|Masters|Yto4a|R32|zugak_top
+D|2024-04-27|Barcelona Masters 2024|Masters|blasty_dev|R32|magib
+D|2024-04-27|Barcelona Masters 2024|Masters|magib|R32|blasty_dev
+D|2024-04-27|Barcelona Masters 2024|Masters|mongoose16|R32|jasjas88
+D|2024-04-27|Barcelona Masters 2024|Masters|jasjas88|R32|mongoose16
+D|2024-04-27|Barcelona Masters 2024|Masters|rlawyer4|R32|tacothegreat232
+D|2024-04-27|Barcelona Masters 2024|Masters|tacothegreat232|R32|rlawyer4
+D|2024-04-27|Barcelona Masters 2024|Masters|olicromex|R32|khaoskos1
+D|2024-04-27|Barcelona Masters 2024|Masters|khaoskos1|R32|olicromex
+S|2024-04-21|BMW Open 2024|250|ytlavaawesomeness|W|
+S|2024-04-21|BMW Open 2024|250|Aryentei|F|
+S|2024-04-21|BMW Open 2024|250|clawthxrne|SF|
+S|2024-04-21|BMW Open 2024|250|SlowMo_PL|SF|
+S|2024-04-21|BMW Open 2024|250|matmatski|QF|
+S|2024-04-21|BMW Open 2024|250|shadaurr|QF|
+S|2024-04-21|BMW Open 2024|250|deelovesrevy|QF|
+S|2024-04-21|BMW Open 2024|250|indkol22|QF|
+S|2024-04-21|BMW Open 2024|250|CommanderHistorian|R16|
+S|2024-04-21|BMW Open 2024|250|LienPiece|R16|
+S|2024-04-21|BMW Open 2024|250|yeqna|R16|
+S|2024-04-21|BMW Open 2024|250|Lucas_pt54|R16|
+S|2024-04-21|BMW Open 2024|250|xxmaximxx15|R16|
+S|2024-04-21|BMW Open 2024|250|MoonTheGoon1|R16|
+S|2024-04-21|BMW Open 2024|250|neoyup|R16|
+S|2024-04-21|BMW Open 2024|250|Yoyowhatsup4|R16|
+S|2024-04-21|BMW Open 2024|250|WlLLRB|R32|
+S|2024-04-21|BMW Open 2024|250|hotgoo|R32|
+S|2024-04-21|BMW Open 2024|250|mitchycos|R32|
+S|2024-04-21|BMW Open 2024|250|SirGdizz|R32|
+S|2024-04-21|BMW Open 2024|250|stayathome46|R32|
+S|2024-04-23|Tiriac Open 2024|250|trollaso3089|W|
+S|2024-04-23|Tiriac Open 2024|250|Marcin2590|F|
+S|2024-04-23|Tiriac Open 2024|250|Norty|SF|
+S|2024-04-23|Tiriac Open 2024|250|Proxy10_1|SF|
+S|2024-04-23|Tiriac Open 2024|250|Avant82|QF|
+S|2024-04-23|Tiriac Open 2024|250|ii_Dreadlord|QF|
+S|2024-04-23|Tiriac Open 2024|250|CristyValentin_2005|QF|
+S|2024-04-23|Tiriac Open 2024|250|Nxbxula|QF|
+S|2024-04-23|Tiriac Open 2024|250|LostInSalt|R16|
+S|2024-04-23|Tiriac Open 2024|250|JorgeChachi_YT|R16|
+S|2024-04-23|Tiriac Open 2024|250|BjorgMilk|R16|
+S|2024-04-23|Tiriac Open 2024|250|NarrowLmao|R16|
+S|2024-04-23|Tiriac Open 2024|250|Koodahh|R16|
+S|2024-04-23|Tiriac Open 2024|250|randmguy1233|R16|
+S|2024-04-23|Tiriac Open 2024|250|Bakurrs|R16|
+S|2024-04-23|Tiriac Open 2024|250|Zevillox|R16|
+S|2024-04-23|Tiriac Open 2024|250|PlatinumScripting|R32|
+S|2024-04-23|Tiriac Open 2024|250|iDiamondKill|R32|
+S|2024-04-23|Tiriac Open 2024|250|LilBank|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Lengku012|W|
+S|2024-03-30|Indian Wells Masters 2024|Masters|ytlavaawesomeness|F|
+S|2024-03-30|Indian Wells Masters 2024|Masters|policeCOKE1|SF|
+S|2024-03-30|Indian Wells Masters 2024|Masters|LostInSalt|SF|
+S|2024-03-30|Indian Wells Masters 2024|Masters|SlowMo_PL|QF|
+S|2024-03-30|Indian Wells Masters 2024|Masters|ii_Dreadlord|QF|
+S|2024-03-30|Indian Wells Masters 2024|Masters|CristyValentin_2005|QF|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Nxbxula|QF|
+S|2024-03-30|Indian Wells Masters 2024|Masters|a_lexxO5|R16|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Proxy10_1|R16|
+S|2024-03-30|Indian Wells Masters 2024|Masters|clawthxrne|R16|
+S|2024-03-30|Indian Wells Masters 2024|Masters|shadaurr|R16|
+S|2024-03-30|Indian Wells Masters 2024|Masters|BergeVo|R16|
+S|2024-03-30|Indian Wells Masters 2024|Masters|deelovesrevy|R16|
+S|2024-03-30|Indian Wells Masters 2024|Masters|imok321|R16|
+S|2024-03-30|Indian Wells Masters 2024|Masters|nmcconnell12|R16|
+S|2024-03-30|Indian Wells Masters 2024|Masters|zack123go|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|BreezyAmazingtray|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|CommanderHistorian|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|JorgeChachi_YT|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Faaruuq129|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Avant82|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|BjorgMilk|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Tx_blitzz|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Osmix_PL|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|It_smalls2121alt|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Jxckahh|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|NotTrueFoodis|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|TsEclipseBtw|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Zevillox|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Aareilly|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Imagodsogoodbro|R32|
+S|2024-03-30|Indian Wells Masters 2024|Masters|aziz_inho|R64|
+S|2024-03-30|Indian Wells Masters 2024|Masters|XxDeuvexX|R64|
+S|2024-03-30|Indian Wells Masters 2024|Masters|allan2202|R64|
+S|2024-03-30|Indian Wells Masters 2024|Masters|xxmaximxx15|R64|
+S|2024-03-30|Indian Wells Masters 2024|Masters|nicecat920|R64|
+S|2024-03-30|Indian Wells Masters 2024|Masters|Preyiess|R64|
+S|2024-03-30|Indian Wells Masters 2024|Masters|SirGdizz|R64|
+S|2024-03-30|Miami Open 2024|Masters|nmcconnell12|W|
+S|2024-03-30|Miami Open 2024|Masters|policeCOKE1|F|
+S|2024-03-30|Miami Open 2024|Masters|LostInSalt|SF|
+S|2024-03-30|Miami Open 2024|Masters|trollaso3089|SF|
+S|2024-03-30|Miami Open 2024|Masters|Lengku012|QF|
+S|2024-03-30|Miami Open 2024|Masters|Marcin2590|QF|
+S|2024-03-30|Miami Open 2024|Masters|shadaurr|QF|
+S|2024-03-30|Miami Open 2024|Masters|Zevillox|QF|
+S|2024-03-30|Miami Open 2024|Masters|a_lexxO5|R16|
+S|2024-03-30|Miami Open 2024|Masters|Aareilly|R16|
+S|2024-03-30|Miami Open 2024|Masters|Avant82|R16|
+S|2024-03-30|Miami Open 2024|Masters|ii_Dreadlord|R16|
+S|2024-03-30|Miami Open 2024|Masters|Imagodsogoodbro|R16|
+S|2024-03-30|Miami Open 2024|Masters|NotTrueFoodis|R16|
+S|2024-03-30|Miami Open 2024|Masters|nxbxula|R16|
+S|2024-03-30|Miami Open 2024|Masters|thewishdonator1|R16|
+S|2024-03-30|Miami Open 2024|Masters|aziz_inho|R32|
+S|2024-03-30|Miami Open 2024|Masters|BjorgMilk|R32|
+S|2024-03-30|Miami Open 2024|Masters|clawthxrne|R32|
+S|2024-03-30|Miami Open 2024|Masters|CommanderHistorian|R32|
+S|2024-03-30|Miami Open 2024|Masters|CristyValentin_2005|R32|
+S|2024-03-30|Miami Open 2024|Masters|deelovesrevy|R32|
+S|2024-03-30|Miami Open 2024|Masters|Faaruuq129|R32|
+S|2024-03-30|Miami Open 2024|Masters|geolyre|R32|
+S|2024-03-30|Miami Open 2024|Masters|imok321|R32|
+S|2024-03-30|Miami Open 2024|Masters|Jxckahh|R32|
+S|2024-03-30|Miami Open 2024|Masters|Osmix_PL|R32|
+S|2024-03-30|Miami Open 2024|Masters|pogikid|R32|
+S|2024-03-30|Miami Open 2024|Masters|Proxy10_1|R32|
+S|2024-03-30|Miami Open 2024|Masters|Tx_blitzz|R32|
+S|2024-03-30|Miami Open 2024|Masters|XxDeuvexX|R32|
+S|2024-03-30|Miami Open 2024|Masters|zack123go|R32|
+S|2024-03-30|Miami Open 2024|Masters|allan2202|R64|
+S|2024-03-30|Miami Open 2024|Masters|BreezyAmazingtray|R64|
+S|2024-03-30|Miami Open 2024|Masters|davoid1|R64|
+S|2024-03-30|Miami Open 2024|Masters|It_smalls2121alt|R64|
+S|2024-03-30|Miami Open 2024|Masters|nicecat920|R64|
+S|2024-03-30|Miami Open 2024|Masters|Preyiess|R64|
+S|2024-03-30|Miami Open 2024|Masters|SirGdizz|R64|
+S|2024-03-30|Miami Open 2024|Masters|super6x6x|R64|
+S|2024-03-30|Miami Open 2024|Masters|xxmaximxx15|R64|
+D|2024-03-10|Chile Open 2024|500|kaguyashinomiya|W|ilovetennis678
+D|2024-03-10|Chile Open 2024|500|ilovetennis678|W|kaguyashinomiya
+D|2024-03-10|Chile Open 2024|500|Juanito|F|SlowMo_PL
+D|2024-03-10|Chile Open 2024|500|SlowMo_PL|F|Juanito
+D|2024-03-10|Chile Open 2024|500|3Norty|SF|ZincJ1
+D|2024-03-10|Chile Open 2024|500|ZincJ1|SF|3Norty
+D|2024-03-10|Chile Open 2024|500|ytlavaawesomeness|SF|loumac
+D|2024-03-10|Chile Open 2024|500|loumac|SF|ytlavaawesomeness
+D|2024-03-10|Chile Open 2024|500|greatpie123|QF|1kopt
+D|2024-03-10|Chile Open 2024|500|1kopt|QF|greatpie123
+D|2024-03-10|Chile Open 2024|500|CristyValentin_2005|QF|Avant82
+D|2024-03-10|Chile Open 2024|500|Avant82|QF|CristyValentin_2005
+D|2024-03-10|Chile Open 2024|500|SimmeBooga|QF|TylerLikesAir
+D|2024-03-10|Chile Open 2024|500|TylerLikesAir|QF|SimmeBooga
+D|2024-03-10|Chile Open 2024|500|Bxrnacle|QF|lusadian12
+D|2024-03-10|Chile Open 2024|500|lusadian12|QF|Bxrnacle
+D|2024-03-10|Chile Open 2024|500|1Blaz_e|R16|BreezxXy
+D|2024-03-10|Chile Open 2024|500|BreezxXy|R16|1Blaz_e
+D|2024-03-10|Chile Open 2024|500|iLuvRequis|R16|70V3D
+D|2024-03-10|Chile Open 2024|500|70V3D|R16|iLuvRequis
+D|2024-03-10|Chile Open 2024|500|Proxy10_1|R16|HomeslessGP
+D|2024-03-10|Chile Open 2024|500|HomeslessGP|R16|Proxy10_1
+D|2024-03-10|Chile Open 2024|500|MEM4IK22818|R16|andrey940608
+D|2024-03-10|Chile Open 2024|500|andrey940608|R16|MEM4IK22818
+D|2024-03-10|Chile Open 2024|500|Tomson|R16|Dom
+D|2024-03-10|Chile Open 2024|500|Dom|R16|Tomson
+D|2024-03-10|Chile Open 2024|500|Txnkyy|R16|LuvisCalm
+D|2024-03-10|Chile Open 2024|500|LuvisCalm|R16|Txnkyy
+D|2024-03-10|Chile Open 2024|500|Txnkyy|R16|Qeccix
+D|2024-03-10|Chile Open 2024|500|Qeccix|R16|Txnkyy
+D|2024-03-10|Chile Open 2024|500|Zevillox|R16|LostInSalt
+D|2024-03-10|Chile Open 2024|500|LostInSalt|R16|Zevillox
+D|2024-03-10|Chile Open 2024|500|CommanderHistorian|R32|BreezyAmazingtray
+D|2024-03-10|Chile Open 2024|500|BreezyAmazingtray|R32|CommanderHistorian
+D|2024-03-10|Chile Open 2024|500|juanesebanel|R32|Nabiihkl
+D|2024-03-10|Chile Open 2024|500|Nabiihkl|R32|juanesebanel
+D|2024-03-10|Chile Open 2024|500|blnksky|R32|Phonk_G
+D|2024-03-10|Chile Open 2024|500|Phonk_G|R32|blnksky
+D|2024-03-10|Chile Open 2024|500|avvarenn|R32|awippy
+D|2024-03-10|Chile Open 2024|500|awippy|R32|avvarenn
+D|2024-03-10|Chile Open 2024|500|TyDebilHaHaBlat|R32|leaninja012
+D|2024-03-10|Chile Open 2024|500|leaninja012|R32|TyDebilHaHaBlat
+D|2024-03-10|Chile Open 2024|500|anamari1123|R32|itsbossy44
+D|2024-03-10|Chile Open 2024|500|itsbossy44|R32|anamari1123
+D|2024-03-10|Chile Open 2024|500|QPinkFTW|R32|cosminqf
+D|2024-03-10|Chile Open 2024|500|cosminqf|R32|QPinkFTW
+D|2024-03-10|Chile Open 2024|500|Dimitrije562|R32|TojiFushiguro71
+D|2024-03-10|Chile Open 2024|500|TojiFushiguro71|R32|Dimitrije562
+D|2024-03-10|Chile Open 2024|500|randmguy1233|R32|marcin
+D|2024-03-10|Chile Open 2024|500|marcin|R32|randmguy1233
+D|2024-03-10|Chile Open 2024|500|eggvolk|R32|shadow
+D|2024-03-10|Chile Open 2024|500|shadow|R32|eggvolk
+D|2024-03-10|Chile Open 2024|500|ZenitsuFlashh|R32|byehifunfor
+D|2024-03-10|Chile Open 2024|500|byehifunfor|R32|ZenitsuFlashh
+D|2024-03-10|Chile Open 2024|500|diamondtiger69|R32|Giant_Cheezit1
+D|2024-03-10|Chile Open 2024|500|Giant_Cheezit1|R32|diamondtiger69
+D|2024-03-10|Chile Open 2024|500|MCP_tr0n|R32|cuddly_cupcake123
+D|2024-03-10|Chile Open 2024|500|cuddly_cupcake123|R32|MCP_tr0n
+D|2024-03-10|Chile Open 2024|500|MonsterWyatt|R32|edreams11111
+D|2024-03-10|Chile Open 2024|500|edreams11111|R32|MonsterWyatt
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Norty|W|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|juanito|F|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|1Blaz_e|SF|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|BergeVo|SF|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|ii_Dreadlord|QF|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|policeCOKE1|QF|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|slowmo_pl|QF|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Txnkyy|QF|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Avant82|R16|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|LuvisCalm|R16|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Marcin2590|R16|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|MonsterWyatt|R16|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|randmguy1233|R16|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|siemsxhs|R16|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|thewishdonator1|R16|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Tx_blitzz|R16|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Akseiii|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Bartek|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|CommanderHistorian|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|CristyValentin_2005|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|DavidSab123|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Dimitrije562|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|DiscipleWei|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|iambadbutcool2|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|LostInSalt|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|MatteoP04ita|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Maximo_2016|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|mles100|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|nwqc|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|sotis2|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|VaP_Plays|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Zevillox|R32|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Alexithy|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|avvarenn|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|diamondtiger69|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Giant_Cheezit1|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|itsbossy44|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|MCP_tr0n|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Mr_Mugz|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|murinos2|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Papermints1221|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|sim|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|Xplosion2005|R64|
+S|2024-03-03|Abierto Mexicano Telcel 2024|500|ZenitsuFlashh|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|Norty|W|
+S|2024-03-05|Dubai Duty Free 2024|500|policeCOKE1|F|
+S|2024-03-05|Dubai Duty Free 2024|500|Marcin2590|SF|
+S|2024-03-05|Dubai Duty Free 2024|500|SlowMo_PL|SF|
+S|2024-03-05|Dubai Duty Free 2024|500|1Blaz_e|QF|
+S|2024-03-05|Dubai Duty Free 2024|500|ii_Dreadlord|QF|
+S|2024-03-05|Dubai Duty Free 2024|500|thewishdonator1|QF|
+S|2024-03-05|Dubai Duty Free 2024|500|ytlavaawesomeness|QF|
+S|2024-03-05|Dubai Duty Free 2024|500|Akseiii|R16|
+S|2024-03-05|Dubai Duty Free 2024|500|Amgoingtofollowurn|R16|
+S|2024-03-05|Dubai Duty Free 2024|500|Avant82|R16|
+S|2024-03-05|Dubai Duty Free 2024|500|BergeVo|R16|
+S|2024-03-05|Dubai Duty Free 2024|500|CristyValentin_2005|R16|
+S|2024-03-05|Dubai Duty Free 2024|500|MatteoP04ita|R16|
+S|2024-03-05|Dubai Duty Free 2024|500|Qeccix|R16|
+S|2024-03-05|Dubai Duty Free 2024|500|randmguy1233|R16|
+S|2024-03-05|Dubai Duty Free 2024|500|DavidSab123|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|diamondtiger69|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|Dimitrije562|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|DiscipleWei|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|Domnulinvizibil|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|HomelessGP|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|itsbossy44|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|LostInSalt|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|LuvisCalm|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|mles100|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|MonsterWyatt|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|siemsxhs|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|sotis2|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|Tx_blitzz|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|Txnkyy|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|Zevillox|R32|
+S|2024-03-05|Dubai Duty Free 2024|500|Alexithy|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|Anth0nyR1ZZ0|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|avvarenn|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|Bartek|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|CommanderHistorian|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|Giant_Cheezit1|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|HiBroAmBest1|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|iambadbutcool2|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|Maximo_2016|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|MCP_tr0n|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|Mr_Mugz|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|murinos2|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|nwqc|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|Papermints1221|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|sim|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|VaP_Play|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|Xplosion2005|R64|
+S|2024-03-05|Dubai Duty Free 2024|500|ZenitsuFlashh|R64|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|Akseiii|W|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|ytquacky|F|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|Dimitrije562|SF|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|siemsxhs|SF|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|DiscipleWei|QF|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|Marcin2590|QF|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|randmguy1233|QF|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|XxcarshixX|QF|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|avvarenn|R16|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|MatteoP04ita|R16|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|MCP_tr0n|R16|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|mles100|R16|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|MonsterWyatt|R16|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|Tx_blitzz|R16|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|Txnkyy|R16|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|ZenitsuFlashh|R16|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|Alexithy|R32|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|CommanderHistorian|R32|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|Fixling|R32|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|itsbossy44|R32|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|murinos2|R32|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|Sad_kid02|R32|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|SkinnyWhiteNiceGuy|R32|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|sotis2|R32|
+S|2024-03-10|Rwanda Challenger 2024|Challenger|spacecenter42|R32|
+D|2024-02-03|Australian Open 2024|Grand Slam|Domnulinvizibil|W|Tomson_3000
+D|2024-02-03|Australian Open 2024|Grand Slam|Tomson_3000|W|Domnulinvizibil
+D|2024-02-03|Australian Open 2024|Grand Slam|1kopt|F|greatpie123
+D|2024-02-03|Australian Open 2024|Grand Slam|greatpie123|F|1kopt
+D|2024-02-03|Australian Open 2024|Grand Slam|1Blaz_e|SF|BreezxXy
+D|2024-02-03|Australian Open 2024|Grand Slam|BreezxXy|SF|1Blaz_e
+D|2024-02-03|Australian Open 2024|Grand Slam|CristyValentin_2005|SF|Avant82
+D|2024-02-03|Australian Open 2024|Grand Slam|Avant82|SF|CristyValentin_2005
+D|2024-02-03|Australian Open 2024|Grand Slam|Mario_D444|QF|biswaldojones
+D|2024-02-03|Australian Open 2024|Grand Slam|biswaldojones|QF|Mario_D444
+D|2024-02-03|Australian Open 2024|Grand Slam|shadaurr|QF|eggvolk
+D|2024-02-03|Australian Open 2024|Grand Slam|eggvolk|QF|shadaurr
+D|2024-02-03|Australian Open 2024|Grand Slam|randmguy1233|QF|dzonitravolta33
+D|2024-02-03|Australian Open 2024|Grand Slam|dzonitravolta33|QF|randmguy1233
+D|2024-02-03|Australian Open 2024|Grand Slam|ytlavaawesomeness|QF|loumac700
+D|2024-02-03|Australian Open 2024|Grand Slam|loumac700|QF|ytlavaawesomeness
+D|2024-02-03|Australian Open 2024|Grand Slam|3Norty|R16|ZincJ1
+D|2024-02-03|Australian Open 2024|Grand Slam|ZincJ1|R16|3Norty
+D|2024-02-03|Australian Open 2024|Grand Slam|Ghosti3n|R16|AndrewLuvzGod
+D|2024-02-03|Australian Open 2024|Grand Slam|AndrewLuvzGod|R16|Ghosti3n
+D|2024-02-03|Australian Open 2024|Grand Slam|Rebound|R16|Unbound
+D|2024-02-03|Australian Open 2024|Grand Slam|Unbound|R16|Rebound
+D|2024-02-03|Australian Open 2024|Grand Slam|sirinette000|R16|ArbnorKS
+D|2024-02-03|Australian Open 2024|Grand Slam|ArbnorKS|R16|sirinette000
+D|2024-02-03|Australian Open 2024|Grand Slam|Juanito|R16|SlowMo_PL
+D|2024-02-03|Australian Open 2024|Grand Slam|SlowMo_PL|R16|Juanito
+D|2024-02-03|Australian Open 2024|Grand Slam|Bartek|R16|MixuuuM
+D|2024-02-03|Australian Open 2024|Grand Slam|MixuuuM|R16|Bartek
+D|2024-02-03|Australian Open 2024|Grand Slam|DeusZC|R16|smileytf2
+D|2024-02-03|Australian Open 2024|Grand Slam|smileytf2|R16|DeusZC
+D|2024-02-03|Australian Open 2024|Grand Slam|Amgoingtofollowurn|R16|BergeVo
+D|2024-02-03|Australian Open 2024|Grand Slam|BergeVo|R16|Amgoingtofollowurn
+D|2024-02-03|Australian Open 2024|Grand Slam|PaperHours|R32|FerreiraWEXD
+D|2024-02-03|Australian Open 2024|Grand Slam|FerreiraWEXD|R32|PaperHours
+D|2024-02-03|Australian Open 2024|Grand Slam|Gentilchevalier|R32|NightStormZackary
+D|2024-02-03|Australian Open 2024|Grand Slam|NightStormZackary|R32|Gentilchevalier
+D|2024-02-03|Australian Open 2024|Grand Slam|Joe0313|R32|SgtFartTheSauce
+D|2024-02-03|Australian Open 2024|Grand Slam|SgtFartTheSauce|R32|Joe0313
+D|2024-02-03|Australian Open 2024|Grand Slam|MonsterWyatt|R32|edreams1111
+D|2024-02-03|Australian Open 2024|Grand Slam|edreams1111|R32|MonsterWyatt
+D|2024-02-03|Australian Open 2024|Grand Slam|Scawby|R32|Eric484
+D|2024-02-03|Australian Open 2024|Grand Slam|Eric484|R32|Scawby
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|ytquacky|W|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|Marcin2590|F|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|LuvisCalm|SF|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|randmguy1233|SF|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|MatteoP04ita|QF|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|MonsterWyatt|QF|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|NightStormZackary|QF|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|siemsxhs|QF|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|DavidSab123|R16|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|Gentilchevalier|R16|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|lavndro|R16|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|mles100|R16|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|nwqc|R16|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|polyvein|R16|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|Proxy10_1|R16|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|sotis2|R16|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|ausquets|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|Eric484|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|Fixling|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|fmgeorge|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|kuudazai|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|Maximo_2016|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|onlybloxfruit_best|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|PROyoutuberYgamer330|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|Scawby|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|serbianplaj|R32|
+S|2024-02-03|Glasgow Gardens Invitational 2024|Challenger|Diamxndq|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|SlowMo_PL|W|
+S|2024-02-04|Australian Open 2024|Grand Slam|ytlavaawesomeness|F|
+S|2024-02-04|Australian Open 2024|Grand Slam|BergeVo|SF|
+S|2024-02-04|Australian Open 2024|Grand Slam|Domnulinvizibil|SF|
+S|2024-02-04|Australian Open 2024|Grand Slam|Bartek|QF|
+S|2024-02-04|Australian Open 2024|Grand Slam|LuvisCalm|QF|
+S|2024-02-04|Australian Open 2024|Grand Slam|Tomson_3000|QF|
+S|2024-02-04|Australian Open 2024|Grand Slam|ytquacky|QF|
+S|2024-02-04|Australian Open 2024|Grand Slam|Amgoingtofollowurn|R16|
+S|2024-02-04|Australian Open 2024|Grand Slam|Avant82|R16|
+S|2024-02-04|Australian Open 2024|Grand Slam|Biswaldojones|R16|
+S|2024-02-04|Australian Open 2024|Grand Slam|juanito|R16|
+S|2024-02-04|Australian Open 2024|Grand Slam|Marcin2590|R16|
+S|2024-02-04|Australian Open 2024|Grand Slam|MatteoP04ita|R16|
+S|2024-02-04|Australian Open 2024|Grand Slam|monkeyninja505|R16|
+S|2024-02-04|Australian Open 2024|Grand Slam|policeCOKE1|R16|
+S|2024-02-04|Australian Open 2024|Grand Slam|3Norty|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|BreezxXy|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|CristyValentin_2005|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|DavidSab123|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|DeusZC|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|Eric484|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|GamingBaconMeNo|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|Lengku012|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|MonsterWyatt|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|NightStormZackary|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|onlybloxfruit_best|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|randmguy1233|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|Scawby|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|shadaurr|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|siemsxhs|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|VaP_Plays|R32|
+S|2024-02-04|Australian Open 2024|Grand Slam|alexburr35|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|ausquets|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|Block0236|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|Coolkidz991|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|Diamxndq|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|fmgeorge|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|Foughtsneeze401|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|Gentilchevalier|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|Joe0313|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|kuudazai|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|Maximo_2016|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|mles100|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|notrealethangamer|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|nwqc|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|PROyoutuberYgamer330|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|serbianplaj|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|simreply|R64|
+S|2024-02-04|Australian Open 2024|Grand Slam|sotis2|R64|
+D|2024-01-21|Montpellier Open 2024|250|delxium|W|vxtoad
+D|2024-01-21|Montpellier Open 2024|250|vxtoad|W|delxium
+D|2024-01-21|Montpellier Open 2024|250|shadaurr|F|eggvolk
+D|2024-01-21|Montpellier Open 2024|250|eggvolk|F|shadaurr
+D|2024-01-21|Montpellier Open 2024|250|Cristy|SF|Avant82
+D|2024-01-21|Montpellier Open 2024|250|Avant82|SF|Cristy
+D|2024-01-21|Montpellier Open 2024|250|ytlavaawesomeness|SF|loumac700
+D|2024-01-21|Montpellier Open 2024|250|loumac700|SF|ytlavaawesomeness
+D|2024-01-21|Montpellier Open 2024|250|juanito|QF|youre
+D|2024-01-21|Montpellier Open 2024|250|youre|QF|juanito
+D|2024-01-21|Montpellier Open 2024|250|SimmeBooga|QF|TylerLikesAir
+D|2024-01-21|Montpellier Open 2024|250|TylerLikesAir|QF|SimmeBooga
+D|2024-01-21|Montpellier Open 2024|250|BergeVo|QF|Amgoingtofollowurn
+D|2024-01-21|Montpellier Open 2024|250|Amgoingtofollowurn|QF|BergeVo
+D|2024-01-21|Montpellier Open 2024|250|ytquacky|QF|kidneystone
+D|2024-01-21|Montpellier Open 2024|250|kidneystone|QF|ytquacky
+D|2024-01-21|Montpellier Open 2024|250|randmguy1233|R16|dzonitravolta33
+D|2024-01-21|Montpellier Open 2024|250|dzonitravolta33|R16|randmguy1233
+S|2024-01-15|Canberra International 2024|Challenger|ytquacky|W|
+S|2024-01-15|Canberra International 2024|Challenger|randmguy1233|F|
+S|2024-01-15|Canberra International 2024|Challenger|siemsxhs|SF|
+S|2024-01-15|Canberra International 2024|Challenger|the_bombik|SF|
+S|2024-01-15|Canberra International 2024|Challenger|dzonitravolta33|QF|
+S|2024-01-15|Canberra International 2024|Challenger|MatteoP04ita|QF|
+S|2024-01-15|Canberra International 2024|Challenger|Nxbxula|QF|
+S|2024-01-15|Canberra International 2024|Challenger|Pancracio0305|QF|
+S|2024-01-15|Canberra International 2024|Challenger|7starricky|R16|
+S|2024-01-15|Canberra International 2024|Challenger|gamingwithrenyt|R16|
+S|2024-01-15|Canberra International 2024|Challenger|H3lloBrown1109|R16|
+S|2024-01-15|Canberra International 2024|Challenger|joshypgio|R16|
+S|2024-01-15|Canberra International 2024|Challenger|Marcin2590|R16|
+S|2024-01-15|Canberra International 2024|Challenger|Maximo_2016|R16|
+S|2024-01-15|Canberra International 2024|Challenger|mrmeatkoala|R16|
+S|2024-01-15|Canberra International 2024|Challenger|VibezXyt|R16|
+S|2024-01-15|Canberra International 2024|Challenger|1x5x7x4x3x9x5|R32|
+S|2024-01-15|Canberra International 2024|Challenger|Alexithymla|R32|
+S|2024-01-15|Canberra International 2024|Challenger|paceae|R32|
+S|2024-01-15|Canberra International 2024|Challenger|pitch11111|R32|
+S|2024-01-15|Canberra International 2024|Challenger|woblot_t|R32|
+S|2024-01-14|Adelaide International 2024|250|Bartek|W|
+S|2024-01-14|Adelaide International 2024|250|ytlavaawesomeness|F|
+S|2024-01-14|Adelaide International 2024|250|kaguyashinomiya|SF|
+S|2024-01-14|Adelaide International 2024|250|ytquacky|SF|
+S|2024-01-14|Adelaide International 2024|250|Marcin2590|QF|
+S|2024-01-14|Adelaide International 2024|250|policeCOKE1|QF|
+S|2024-01-14|Adelaide International 2024|250|shadaurr|QF|
+S|2024-01-14|Adelaide International 2024|250|SlowMo_PL|QF|
+S|2024-01-14|Adelaide International 2024|250|Amgoingtofollowurn|R16|
+S|2024-01-14|Adelaide International 2024|250|BergeVo|R16|
+S|2024-01-14|Adelaide International 2024|250|juanito|R16|
+S|2024-01-14|Adelaide International 2024|250|MatteoP04ita|R16|
+S|2024-01-14|Adelaide International 2024|250|nonotitan0003|R16|
+S|2024-01-14|Adelaide International 2024|250|Nxbxula|R16|
+S|2024-01-14|Adelaide International 2024|250|Pancracio0305|R16|
+S|2024-01-14|Adelaide International 2024|250|xxx123phoenix123xx|R16|
+S|2024-01-14|Adelaide International 2024|250|7starricky|R32|
+S|2024-01-14|Adelaide International 2024|250|Avant82|R32|
+S|2024-01-14|Adelaide International 2024|250|CristyValentin_2005|R32|
+S|2024-01-14|Adelaide International 2024|250|jet851|R32|
+S|2024-01-14|Adelaide International 2024|250|Maximo_2016|R32|
+S|2024-01-14|Adelaide International 2024|250|mrmeatkoala|R32|
+S|2024-01-14|Adelaide International 2024|250|paceae|R32|
+S|2024-01-14|Adelaide International 2024|250|pitch11111|R32|
+S|2024-01-14|Adelaide International 2024|250|siemsxhs|R32|
+S|2024-01-14|Adelaide International 2024|250|randmguy1233|R32|
+S|2024-01-14|Adelaide International 2024|250|joshypgio|R32|
+S|2023-12-27|United Cup 2024|500|trollaso3089|W|
+S|2023-12-27|United Cup 2024|500|BergeVo|F|
+S|2023-12-27|United Cup 2024|500|ytlavaawesomeness|F|
+S|2023-12-27|United Cup 2024|500|xxx123phoenix123xx|SF|
+S|2023-12-27|United Cup 2024|500|SlowMo_PL|SF|
+S|2023-12-27|United Cup 2024|500|shadaurr|SF|
+S|2023-12-27|United Cup 2024|500|policeCOKE1|QF|
+S|2023-12-27|United Cup 2024|500|icanburnbedrock|QF|
+S|2023-12-27|United Cup 2024|500|greatpie123|QF|
+S|2023-12-27|United Cup 2024|500|SimmeBooga|QF|
+S|2023-12-27|United Cup 2024|500|Avant82|R16|
+S|2023-12-27|United Cup 2024|500|MatteoP04ita|R16|
+S|2023-12-27|United Cup 2024|500|siemsxhs|R16|
+S|2023-12-27|United Cup 2024|500|suppersorrydoinb|R16|
+S|2023-12-27|United Cup 2024|500|domnulinvizibil|R16|
+S|2025-01-23|ARTP Finals S5|Finals|SlowMo_PL|W||1000
+S|2025-01-23|ARTP Finals S5|Finals|Trollaso3089|F||700
+S|2025-01-23|ARTP Finals S5|Finals|Marcin2590|SF||450
+S|2025-01-23|ARTP Finals S5|Finals|ii_Dreadlord|SF||450
+S|2025-01-23|ARTP Finals S5|Finals|policeCOKE1|RR||100
+S|2025-01-23|ARTP Finals S5|Finals|FloTag|RR||0
+S|2025-01-23|ARTP Finals S5|Finals|Lengku012|RR||100
+S|2025-01-23|ARTP Finals S5|Finals|avnerhik890|RR||0
+D|2025-01-28|ARTP Finals S5|Finals|Cristy_Valentin|W|RussianTarkov|1000
+D|2025-01-28|ARTP Finals S5|Finals|RussianTarkov|W|Cristy_Valentin|1000
+D|2025-01-28|ARTP Finals S5|Finals|AndrewLuvzGod|F|ilovetennis678|700
+D|2025-01-28|ARTP Finals S5|Finals|ilovetennis678|F|AndrewLuvzGod|700
+D|2025-01-28|ARTP Finals S5|Finals|aleks_rudnik|SF|SlowMo_PL|450
+D|2025-01-28|ARTP Finals S5|Finals|SlowMo_PL|SF|aleks_rudnik|450
+D|2025-01-28|ARTP Finals S5|Finals|Zevillox|SF|MoonTheGoon1|450
+D|2025-01-28|ARTP Finals S5|Finals|MoonTheGoon1|SF|Zevillox|450
+D|2025-01-28|ARTP Finals S5|Finals|T14_Mist|RR|vxToad|100
+D|2025-01-28|ARTP Finals S5|Finals|vxToad|RR|T14_Mist|100
+D|2025-01-28|ARTP Finals S5|Finals|ytlavaawesomeness|RR|darthezrah7|0
+D|2025-01-28|ARTP Finals S5|Finals|darthezrah7|RR|ytlavaawesomeness|0
+D|2025-01-28|ARTP Finals S5|Finals|steezvs|RR|LeCarsnn|100
+D|2025-01-28|ARTP Finals S5|Finals|LeCarsnn|RR|steezvs|100
+D|2025-01-28|ARTP Finals S5|Finals|BreezxXy|RR|1Blaz_e|100
+D|2025-01-28|ARTP Finals S5|Finals|1Blaz_e|RR|BreezxXy|100
+S|2024-07-27|ARTP Finals S4|Finals|SlowMo_PL|W||1000
+S|2024-07-27|ARTP Finals S4|Finals|trollaso3089|F||700
+S|2024-07-27|ARTP Finals S4|Finals|Lengku012|SF||450
+S|2024-07-27|ARTP Finals S4|Finals|ytlavaawesomeness|SF||450
+S|2024-07-27|ARTP Finals S4|Finals|policeCOKE1|RR||100
+S|2024-07-27|ARTP Finals S4|Finals|Marcin2590|RR||0
+S|2024-07-27|ARTP Finals S4|Finals|BergeVo|RR||100
+S|2024-07-27|ARTP Finals S4|Finals|nmcconnell12|RR||0
+D|2024-07-29|ARTP Finals S4|Finals|kaguyashinomiya|W|ilovetennis678|1000
+D|2024-07-29|ARTP Finals S4|Finals|ilovetennis678|W|kaguyashinomiya|1000
+D|2024-07-29|ARTP Finals S4|Finals|greatpie123|F|1kopt|700
+D|2024-07-29|ARTP Finals S4|Finals|1kopt|F|greatpie123|700
+D|2024-07-29|ARTP Finals S4|Finals|trollaso3089|SF|SlowMo_PL|450
+D|2024-07-29|ARTP Finals S4|Finals|SlowMo_PL|SF|trollaso3089|450
+D|2024-07-29|ARTP Finals S4|Finals|ytlavaawesomeness|SF|monkeyninja505|450
+D|2024-07-29|ARTP Finals S4|Finals|monkeyninja505|SF|ytlavaawesomeness|450
+D|2024-07-29|ARTP Finals S4|Finals|Avant82|RR|Cristy_Valentin|100
+D|2024-07-29|ARTP Finals S4|Finals|Cristy_Valentin|RR|Avant82|100
+D|2024-07-29|ARTP Finals S4|Finals|randmguy1233|RR|dzonitravolta33|0
+D|2024-07-29|ARTP Finals S4|Finals|dzonitravolta33|RR|randmguy1233|0
+D|2024-07-29|ARTP Finals S4|Finals|1Blaz_e|RR|BreezxXy|100
+D|2024-07-29|ARTP Finals S4|Finals|BreezxXy|RR|1Blaz_e|100
+D|2024-07-29|ARTP Finals S4|Finals|Amgoingtofollowurn|RR|BergeVo|0
+D|2024-07-29|ARTP Finals S4|Finals|BergeVo|RR|Amgoingtofollowurn|0
+S|2025-05-23|Napoli Tennis Cup|Challenger|Lygoh1|W|
+S|2025-05-23|Napoli Tennis Cup|Challenger|lemgendarynaruto|F|
+S|2025-05-23|Napoli Tennis Cup|Challenger|sflynt|SF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|Rdarggg|SF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|nonotitan0003|QF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|h2hvenom|QF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|mokilkopop|QF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|Lolgen6|QF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|77vuk|R16|
+S|2025-04-14|Rosario Challenger|Challenger|Lygoh1|W|
+S|2025-04-14|Rosario Challenger|Challenger|asianbone|F|
+S|2025-04-14|Rosario Challenger|Challenger|cromzonic|SF|
+S|2025-04-14|Rosario Challenger|Challenger|nonotitan0003|SF|
+S|2025-04-14|Rosario Challenger|Challenger|egojustforme|QF|
+S|2025-04-14|Rosario Challenger|Challenger|eiraffy|QF|
+S|2025-04-14|Rosario Challenger|Challenger|lemgendarynaruto|QF|
+S|2025-04-14|Rosario Challenger|Challenger|mycurrentstatus|QF|
+S|2026-02-22|Canberra International|Challenger|6Hermes|W|
+S|2026-02-22|Canberra International|Challenger|karimk897|F|
+S|2026-02-22|Canberra International|Challenger|maksymilandr007|SF|
+S|2026-02-22|Canberra International|Challenger|SamXTran|SF|
+S|2026-02-22|Canberra International|Challenger|sflynt|QF|
+S|2026-02-22|Canberra International|Challenger|wzueki|QF|
+S|2026-02-22|Canberra International|Challenger|Cap7ainMGF|QF|
+S|2026-02-22|Canberra International|Challenger|PiesekMC|QF|
+S|2026-02-22|Canberra International|Challenger|Xinja_XiiYT|R16|
+S|2026-02-22|Canberra International|Challenger|0xtek|R16|
+S|2026-02-22|Canberra International|Challenger|idrissss123_2|R16|
+S|2026-02-22|Canberra International|Challenger|clashofclans12308|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Milos_FullGaming|W|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Nxbxula|F|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|wzueki|SF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|kacper6754|SF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|sflynt|QF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|megacardealer|QF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|CarKostas|QF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|PiesekMC|QF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Ziadgamer2021xd|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Xinja_XiiYT|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|WakamiyaShinobu|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|PanPlacuszek24|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Qry_tps|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Empri0|R16|
+S|2025-09-18|Tampere Open|Challenger|ilikegames_y|W|
+S|2025-09-18|Tampere Open|Challenger|MaximusM1350|F|
+S|2025-09-18|Tampere Open|Challenger|greeninhho|SF|
+S|2025-09-18|Tampere Open|Challenger|wzueki|SF|
+S|2025-09-18|Tampere Open|Challenger|RECKLESSREYES26|QF|
+S|2025-09-18|Tampere Open|Challenger|Cap7ainMGF|QF|
+S|2025-09-18|Tampere Open|Challenger|MrAyluin|QF|
+S|2025-09-18|Tampere Open|Challenger|jjpunchercatpro2ban|QF|
+S|2025-09-18|Tampere Open|Challenger|killzoneshade|R16|
+S|2025-09-18|Tampere Open|Challenger|megacardealer|R16|
+S|2025-09-18|Tampere Open|Challenger|RavageXVII|R16|
+S|2025-09-18|Tampere Open|Challenger|CarKostas|R16|
+S|2025-09-18|Tampere Open|Challenger|NoCapDroon|R16|
+S|2025-09-18|Tampere Open|Challenger|exulan2|R16|
+S|2025-09-18|Tampere Open|Challenger|Silver_Shelf|R16|
+S|2025-09-18|Tampere Open|Challenger|ddmg1|R16|
+S|2025-09-18|Tampere Open|Challenger|samu2403|R32|
 `;
 
 /* ------------------------------------------------------------------ */
@@ -1142,7 +2423,18 @@ function monthlyTicks(minMs) {
   return ticks;
 }
 
-function buildModel(rows, mode, hl) {
+// PR at a moment t = sum of every decayed result value as of t
+function prAt(list, t) {
+  let pr = 0;
+  for (const r of list) {
+    if (r.ms > t) break;                 // list is sorted ascending by date
+    const w = decayW((t - r.ms) / DAY);
+    if (w > 0) pr += r.pts * w;
+  }
+  return pr;
+}
+
+function buildModel(rows, mode) {
   const data = rows.filter((r) => r.mode === mode);
   if (!data.length) return { ranked: [], byKey: {}, field: 0, tournaments: 0 };
   const ticks = monthlyTicks(Math.min(...data.map((r) => r.ms)));
@@ -1154,10 +2446,8 @@ function buildModel(rows, mode, hl) {
     list.sort((a, b) => a.ms - b.ms);
     const display = FORCE_DISPLAY[key] || list[0].player;
     const series = ticks.map((t) => {
-      let pr = 0;
-      for (const r of list) { if (r.ms > t) break; pr += r.pts * decayW((t - r.ms) / DAY, hl); }
       const dt = new Date(t);
-      return { t, pr, label: t === NOW.getTime() ? "Now" : dt.toLocaleDateString("en-GB", { month: "short" }) };
+      return { t, pr: prAt(list, t), label: t === NOW.getTime() ? "Now" : dt.toLocaleDateString("en-GB", { month: "short" }) };
     });
     let peakPR = 0, peakI = 0;
     series.forEach((p, i) => { if (p.pr >= peakPR) { peakPR = p.pr; peakI = i; } });
@@ -1203,21 +2493,17 @@ const CSS = `
 .searchbox input{background:transparent;border:0;outline:0;color:var(--text);font-size:14px;width:160px;font-family:'Inter'}
 .searchbox input::placeholder{color:var(--muted)}
 .searchbox svg{color:var(--muted)}
-.importbar{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden}
-.importhead{display:flex;align-items:center;gap:10px;padding:11px 15px;cursor:pointer;font-size:13px;color:var(--muted)}
-.importhead svg.db{color:var(--ball)}
-.importhead .chev{margin-left:auto;transition:transform .2s}
-.importhead .chev.open{transform:rotate(180deg)}
-.importhead b{color:var(--text);font-weight:600}
-.importbody{padding:0 15px 15px;display:grid;gap:11px}
+.infobar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:18px;padding:11px 15px;font-size:13px;color:var(--muted)}
+.infobar svg.db{color:var(--ball);flex-shrink:0}
+.infobar .chev{margin-left:auto;transition:transform .2s}
+.infobar .chev.open{transform:rotate(180deg)}
+.infobar b{color:var(--text);font-weight:600}
+.infobar.admin{cursor:pointer}
+.importbody{background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;margin:-18px 0 18px;padding:13px 15px 15px;display:grid;gap:11px}
 .importbody .hint{font-size:12px;color:var(--muted);line-height:1.6}
 .importbody .hint code{background:var(--surface2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:#C3D2EA;font-size:11.5px}
 .importbody textarea{width:100%;height:130px;background:#091020;border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:ui-monospace,monospace;font-size:11px;padding:10px;resize:vertical;line-height:1.5}
-.improw{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .btn{background:var(--ball);color:#0A1322;border:0;border-radius:8px;font-family:'Saira Condensed';font-weight:700;font-size:15px;letter-spacing:.03em;padding:8px 18px;cursor:pointer}
-.slider{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted)}
-.slider input{accent-color:var(--ball)}
-.slider b{color:var(--text);font-family:'Saira Condensed';font-weight:600}
 .grid{display:grid;grid-template-columns:1fr 290px;gap:16px;align-items:start}
 @media(max-width:860px){.grid{grid-template-columns:1fr}}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px}
@@ -1295,21 +2581,25 @@ function PRTip({ active, payload }) {
 
 export default function ARTPTracker() {
   const [mode, setMode] = useState("S");
-  const [hl, setHl] = useState(360);
   const [query, setQuery] = useState("ilovetennis678");
   const [active, setActive] = useState("ilovetennis678");
   const [showImport, setShowImport] = useState(false);
   const [draft, setDraft] = useState(DEFAULT_DATA.trim());
   const [src, setSrc] = useState(DEFAULT_DATA);
+  const isAdmin = useMemo(
+    () => typeof window !== "undefined" && window.location.hash.toLowerCase().includes(ADMIN_KEY),
+    []
+  );
 
   const rows = useMemo(() => parseRows(src), [src]);
-  const model = useMemo(() => buildModel(rows, mode, hl), [rows, mode, hl]);
+  const model = useMemo(() => buildModel(rows, mode), [rows, mode]);
   const profile = model.byKey[canon(active)] || null;
 
   const submit = () => {
     const k = canon(query);
     if (model.byKey[k]) { setActive(k); return; }
-    const hit = model.ranked.find((p) => p.key.includes(query.trim().toLowerCase()) || p.display.toLowerCase().includes(query.trim().toLowerCase()));
+    const q = query.trim().toLowerCase();
+    const hit = model.ranked.find((p) => p.key.includes(q) || p.display.toLowerCase().includes(q));
     setActive(hit ? hit.key : "__none__");
   };
 
@@ -1318,7 +2608,7 @@ export default function ARTPTracker() {
       <style>{CSS}</style>
       <div className="wrap">
         <div className="topbar">
-          <div className="brand"><span className="mark">ARTP<span className="ball">·</span>TRACKER</span><span className="sub">Power Ranking · S6–S8</span></div>
+          <div className="brand"><span className="mark">ARTP<span className="ball">·</span>TRACKER</span><span className="sub">Power Ranking · S4–S8</span></div>
           <div className="tools">
             <div className="seg">
               <button className={mode === "S" ? "on" : ""} onClick={() => setMode("S")}><User /> Singles</button>
@@ -1331,23 +2621,18 @@ export default function ARTPTracker() {
           </div>
         </div>
 
-        <div className="importbar">
-          <div className="importhead" onClick={() => setShowImport(!showImport)}>
-            <Database className="db" size={16} />
-            <span><b>{model.tournaments}</b> {mode === "S" ? "singles" : "doubles"} events · <b>{model.field}</b> players · PR decays 100% for 90d then {hl}d half-life</span>
-            <ChevronDown className={`chev ${showImport ? "open" : ""}`} size={16} />
-          </div>
-          {showImport && (
-            <div className="importbody">
-              <div className="hint">One row per result: <code>mode|date|tournament|tier|player|round|partner</code> — <code>mode</code> S/D · <code>tier</code> Grand Slam/Masters/500/250 · <code>round</code> W F SF QF R16 R32 R64 · partner for doubles. Append new tournaments and Rebuild.</div>
-              <textarea value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={false} />
-              <div className="improw">
-                <button className="btn" onClick={() => setSrc(draft)}>Rebuild PR</button>
-                <div className="slider">half-life <b>{hl}d</b><input type="range" min="60" max="365" step="10" value={hl} onChange={(e) => setHl(+e.target.value)} /></div>
-              </div>
-            </div>
-          )}
+        <div className={`infobar ${isAdmin ? "admin" : ""}`} onClick={() => isAdmin && setShowImport(!showImport)}>
+          <Database className="db" size={16} />
+          <span><b>{model.tournaments}</b> {mode === "S" ? "singles" : "doubles"} events · <b>{model.field}</b> players · PR = decayed tournament points, full value for 180 days then fading to zero over 2 years</span>
+          {isAdmin && <ChevronDown className={`chev ${showImport ? "open" : ""}`} size={16} />}
         </div>
+        {isAdmin && showImport && (
+          <div className="importbody">
+            <div className="hint">One row per result: <code>mode|date|tournament|tier|player|round|partner</code> — <code>mode</code> S/D · <code>tier</code> Grand Slam/Masters/500/250/Challenger · <code>round</code> W F SF QF R16 R32 R64 · partner for doubles. This preview is local only — edit <code>DEFAULT_DATA</code> in the source to update the live site.</div>
+            <textarea value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={false} />
+            <div><button className="btn" onClick={() => setSrc(draft)}>Rebuild PR (preview)</button></div>
+          </div>
+        )}
 
         <div className="grid">
           <div>
@@ -1359,7 +2644,7 @@ export default function ARTPTracker() {
                       <div className="avatar">{profile.display[0].toUpperCase()}</div>
                       <div>
                         <h1 className="disp uname">{profile.display}</h1>
-                        <div className="modetag">{mode === "S" ? "Singles" : "Doubles"} · Season 8</div>
+                        <div className="modetag">{mode === "S" ? "Singles" : "Doubles"} · Seasons 4–8</div>
                       </div>
                     </div>
                     <div className="metrics">
@@ -1385,7 +2670,7 @@ export default function ARTPTracker() {
 
                 <div className="card chartcard">
                   <div className="chart-head">
-                    <div className="t"><TrendingUp /> PR Trajectory <span className="sm">100% for 90d, then {hl}d half-life</span></div>
+                    <div className="t"><TrendingUp /> PR Trajectory <span className="sm">full value 180d, fades to 0 by 2yr</span></div>
                     <div className="peaktag">peak <b>{fmt(profile.peakPR)}</b> @ {profile.series[profile.peakI].label}</div>
                   </div>
                   <div style={{ width: "100%", height: 220 }}>
