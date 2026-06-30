@@ -69,8 +69,8 @@ D|2026-05-30|Grand Prix Hassan II Open|250|calImecoco|R16|lusadian12
 D|2026-05-30|Grand Prix Hassan II Open|250|lusadian12|R16|calImecoco
 D|2026-05-30|Grand Prix Hassan II Open|250|georgiepiggie|R16|iratehaspizza
 D|2026-05-30|Grand Prix Hassan II Open|250|iratehaspizza|R16|georgiepiggie
-S|2026-06-01|Libema Open|250|kuzuderee|F|
 S|2026-06-01|Libema Open|250|killzoneshade|W|
+S|2026-06-01|Libema Open|250|kuzuderee|F|
 S|2026-06-01|Libema Open|250|Das_tutWlan|SF|
 S|2026-06-01|Libema Open|250|SlowMo_PL|SF|
 S|2026-06-01|Libema Open|250|NT4_ALSHAROBLOX9|QF|
