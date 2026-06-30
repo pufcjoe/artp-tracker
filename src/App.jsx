@@ -13,7 +13,7 @@ import { Search, User, Users, Database, ChevronDown, TrendingUp, Crown } from "l
  * ================================================================== */
 
 const NOW = new Date("2026-06-30");
-const GRACE_DAYS = 90;          // fixed full-credit window
+const GRACE_DAYS = 360;          // fixed full-credit window
 const DAY = 86400000;
 
 // official ARTP points by tier x round  (also the PR per-result base)
@@ -29,6 +29,7 @@ const ROUND_LABEL = { W: "Champion", F: "Finalist", SF: "Semifinalist", QF: "Qua
 
 const ALIASES = {
   vitzaru: "vitzaru", vitzius: "vitzaru", joethepayne: "vitzaru", kunsaz: "vitzaru",
+  kuzuderee: "kuzuderee", MAJOR1KLASY: "kuzuderee",
   vitzonlyjoshv: "vitzaru", vitzari: "vitzaru",
   flenxu: "flenxuu", ilyanasheii: "ilyanashei", xvxcai: "xvcxai", cristyvalentin: "cristy_valentin",
   khaledraii: "wingstopeffect", beardofglaz3: "wingstopeffect",
