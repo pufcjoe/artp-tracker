@@ -600,6 +600,66 @@ S|2025-07-21|Winnipeg National Bank Open|Challenger|Luckyvzz|R32|
 S|2025-07-21|Winnipeg National Bank Open|Challenger|Grimsical|R32|
 S|2025-07-21|Winnipeg National Bank Open|Challenger|Not_Z3P|R32|
 S|2025-07-21|Winnipeg National Bank Open|Challenger|SamXTran|R32|
+S|2025-05-23|Napoli Tennis Cup|Challenger|Lygoh1|W|
+S|2025-05-23|Napoli Tennis Cup|Challenger|lemgendarynaruto|F|
+S|2025-05-23|Napoli Tennis Cup|Challenger|sflynt|SF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|Rdarggg|SF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|nonotitan0003|QF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|h2hvenom|QF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|mokilkopop|QF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|Lolgen6|QF|
+S|2025-05-23|Napoli Tennis Cup|Challenger|77vuk|R16|
+S|2025-04-14|Rosario Challenger|Challenger|Lygoh1|W|
+S|2025-04-14|Rosario Challenger|Challenger|asianbone|F|
+S|2025-04-14|Rosario Challenger|Challenger|cromzonic|SF|
+S|2025-04-14|Rosario Challenger|Challenger|nonotitan0003|SF|
+S|2025-04-14|Rosario Challenger|Challenger|egojustforme|QF|
+S|2025-04-14|Rosario Challenger|Challenger|eiraffy|QF|
+S|2025-04-14|Rosario Challenger|Challenger|lemgendarynaruto|QF|
+S|2025-04-14|Rosario Challenger|Challenger|mycurrentstatus|QF|
+S|2026-02-22|Canberra International|Challenger|6Hermes|W|
+S|2026-02-22|Canberra International|Challenger|karimk897|F|
+S|2026-02-22|Canberra International|Challenger|maksymilandr007|SF|
+S|2026-02-22|Canberra International|Challenger|SamXTran|SF|
+S|2026-02-22|Canberra International|Challenger|sflynt|QF|
+S|2026-02-22|Canberra International|Challenger|wzueki|QF|
+S|2026-02-22|Canberra International|Challenger|Cap7ainMGF|QF|
+S|2026-02-22|Canberra International|Challenger|PiesekMC|QF|
+S|2026-02-22|Canberra International|Challenger|Xinja_XiiYT|R16|
+S|2026-02-22|Canberra International|Challenger|0xtek|R16|
+S|2026-02-22|Canberra International|Challenger|idrissss123_2|R16|
+S|2026-02-22|Canberra International|Challenger|clashofclans12308|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Milos_FullGaming|W|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Nxbxula|F|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|wzueki|SF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|kacper6754|SF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|sflynt|QF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|megacardealer|QF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|CarKostas|QF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|PiesekMC|QF|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Ziadgamer2021xd|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Xinja_XiiYT|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|WakamiyaShinobu|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|PanPlacuszek24|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Qry_tps|R16|
+S|2025-11-15|Newport Hall of Fame Open|Challenger|Empri0|R16|
+S|2025-09-18|Tampere Open|Challenger|ilikegames_y|W|
+S|2025-09-18|Tampere Open|Challenger|MaximusM1350|F|
+S|2025-09-18|Tampere Open|Challenger|greeninhho|SF|
+S|2025-09-18|Tampere Open|Challenger|wzueki|SF|
+S|2025-09-18|Tampere Open|Challenger|RECKLESSREYES26|QF|
+S|2025-09-18|Tampere Open|Challenger|Cap7ainMGF|QF|
+S|2025-09-18|Tampere Open|Challenger|MrAyluin|QF|
+S|2025-09-18|Tampere Open|Challenger|jjpunchercatpro2ban|QF|
+S|2025-09-18|Tampere Open|Challenger|killzoneshade|R16|
+S|2025-09-18|Tampere Open|Challenger|megacardealer|R16|
+S|2025-09-18|Tampere Open|Challenger|RavageXVII|R16|
+S|2025-09-18|Tampere Open|Challenger|CarKostas|R16|
+S|2025-09-18|Tampere Open|Challenger|NoCapDroon|R16|
+S|2025-09-18|Tampere Open|Challenger|exulan2|R16|
+S|2025-09-18|Tampere Open|Challenger|Silver_Shelf|R16|
+S|2025-09-18|Tampere Open|Challenger|ddmg1|R16|
+S|2025-09-18|Tampere Open|Challenger|samu2403|R32|
 S|2025-05-24|Rome Open|Masters|policeCOKE1|W|
 S|2025-05-24|Rome Open|Masters|Zevillox|F|
 S|2025-05-24|Rome Open|Masters|spiderporc1|SF|
