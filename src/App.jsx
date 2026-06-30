@@ -5,14 +5,14 @@ import {
 import { Search, User, Users, Database, ChevronDown, TrendingUp, Crown } from "lucide-react";
 
 /* ================================================================== *
- *  PR = sum of a player's decayed tournament placements (no cap).
- *  Decay (Fortnite Tracker style):
- *     0–180 days   -> 100% value
- *     180–730 days -> linear fade
- *     2 years+     -> 0%
- *  Per-result value uses the official ARTP point table. The official
- *  ranking ladder (26-week cliff / season reset) is separate and is
- *  NOT recomputed here.
+ *  PR is PLACEMENT-WEIGHTED (Fortnite-Tracker style) to stop early-
+ *  round farming. Each result is worth:
+ *      ROUND_VALUE[how far you went] x TIER_MULT[event size] x decay
+ *  The round curve is steep (a title is worth ~20x an R16 exit) and
+ *  the tier multiplier scales the whole event (Finals/Slam >> 250),
+ *  so deep runs dominate and first-round exits are near zero.
+ *  Decay: 100% to 180 days, linear fade to 0% at 2 years.
+ *  PR = sum of those decayed values. Official ARTP ladder is separate.
  * ================================================================== */
 
 const NOW = new Date("2026-06-30");
@@ -32,6 +32,21 @@ const PTS = {
 };
 const ROUND_DEPTH = { W: 6, F: 5, SF: 4, QF: 3, R16: 2, R32: 1, R64: 0, RR: -1 };
 const ROUND_LABEL = { W: "Champion", F: "Finalist", SF: "Semifinalist", QF: "Quarterfinalist", R16: "R16", R32: "R32", R64: "R64", RR: "RR" };
+
+/* --- PR scoring (placement-weighted, anti-farm) ------------------- *
+ *  ROUND_VALUE: steep curve — winning is worth ~20x an R16 exit, and
+ *  R32/R64 are near zero so showing up and losing early earns nothing.
+ *  TIER_MULT:   per-event multiplier (like FNCS divisions). Tune freely.
+ *  A result's PR value = ROUND_VALUE[round] * TIER_MULT[tier] * decay. */
+const ROUND_VALUE = { W: 1000, F: 600, SF: 350, QF: 150, R16: 50, R32: 12, R64: 3, R128: 0, RR: 60 };
+const TIER_MULT = {
+  "Finals":     3.0,   // season championship (top 8) — the biggest prize
+  "Grand Slam": 2.5,
+  "Masters":    1.5,
+  "500":        1.0,
+  "250":        0.6,
+  "Challenger": 0.3,
+};
 
 const ALIASES = {
   vitzaru: "vitzaru", vitzius: "vitzaru", joethepayne: "vitzaru", kunsaz: "vitzaru",
@@ -56,6 +71,12 @@ const FORCE_DISPLAY = {
 
 const canon = (n) => { const k = n.trim().toLowerCase(); return ALIASES[k] || k; };
 const ptsFor = (tier, round) => (PTS[tier] && PTS[tier][round]) || 0;
+// Placement-weighted PR value for one result (before decay).
+const prVal = (r) => {
+  const mult = TIER_MULT[r.tier] ?? 1;
+  if (r.round === "RR") return (r.pts > 0 ? ROUND_VALUE.RR : 0) * mult; // group win vs not
+  return (ROUND_VALUE[r.round] ?? 0) * mult;
+};
 const decayW = (daysAgo) =>
   daysAgo <= FULL_DAYS ? 1 : daysAgo >= ZERO_DAYS ? 0 : 1 - (daysAgo - FULL_DAYS) / (ZERO_DAYS - FULL_DAYS);
 const fmt = (n) => Math.round(n).toLocaleString("en-US");
@@ -2423,13 +2444,13 @@ function monthlyTicks(minMs) {
   return ticks;
 }
 
-// PR at a moment t = sum of every decayed result value as of t
+// PR at a moment t = sum of every decayed placement value as of t
 function prAt(list, t) {
   let pr = 0;
   for (const r of list) {
     if (r.ms > t) break;                 // list is sorted ascending by date
     const w = decayW((t - r.ms) / DAY);
-    if (w > 0) pr += r.pts * w;
+    if (w > 0) pr += prVal(r) * w;
   }
   return pr;
 }
@@ -2456,11 +2477,8 @@ function buildModel(rows, mode) {
     const finals = list.filter((r) => ROUND_DEPTH[r.round] >= 5).length;
     const semis  = list.filter((r) => ROUND_DEPTH[r.round] >= 4).length;
     let best = list[0];
-    list.forEach((r) => {
-      if (ROUND_DEPTH[r.round] > ROUND_DEPTH[best.round] ||
-        (ROUND_DEPTH[r.round] === ROUND_DEPTH[best.round] && ptsFor(r.tier, "W") > ptsFor(best.tier, "W"))) best = r;
-    });
-    const log = [...list].reverse().map((r) => ({ ...r }));
+    list.forEach((r) => { if (prVal(r) > prVal(best)) best = r; });
+    const log = [...list].reverse().map((r) => ({ ...r, val: prVal(r) }));
     return { key, display, series, currentPR: series[series.length - 1].pr, peakPR, peakI,
       rawTotal, titles, finals, semis, best, log, events: list.length };
   });
@@ -2623,7 +2641,7 @@ export default function ARTPTracker() {
 
         <div className={`infobar ${isAdmin ? "admin" : ""}`} onClick={() => isAdmin && setShowImport(!showImport)}>
           <Database className="db" size={16} />
-          <span><b>{model.tournaments}</b> {mode === "S" ? "singles" : "doubles"} events · <b>{model.field}</b> players · PR = decayed tournament points, full value for 180 days then fading to zero over 2 years</span>
+          <span><b>{model.tournaments}</b> {mode === "S" ? "singles" : "doubles"} events · <b>{model.field}</b> players · PR is placement-weighted (deep runs &gt;&gt; early exits), scaled by event tier, decaying to zero over 2 years</span>
           {isAdmin && <ChevronDown className={`chev ${showImport ? "open" : ""}`} size={16} />}
         </div>
         {isAdmin && showImport && (
@@ -2670,7 +2688,7 @@ export default function ARTPTracker() {
 
                 <div className="card chartcard">
                   <div className="chart-head">
-                    <div className="t"><TrendingUp /> PR Trajectory <span className="sm">full value 180d, fades to 0 by 2yr</span></div>
+                    <div className="t"><TrendingUp /> PR Trajectory <span className="sm">placement-weighted · decays over 2yr</span></div>
                     <div className="peaktag">peak <b>{fmt(profile.peakPR)}</b> @ {profile.series[profile.peakI].label}</div>
                   </div>
                   <div style={{ width: "100%", height: 220 }}>
@@ -2691,7 +2709,7 @@ export default function ARTPTracker() {
                 <div className="card tablecard">
                   <div className="tcap">Event log · {mode === "S" ? "singles" : "doubles"}</div>
                   <table className="ev">
-                    <thead><tr><th>Date</th><th>Tournament</th>{mode === "D" && <th>Partner</th>}<th>Result</th><th className="num">Pts</th></tr></thead>
+                    <thead><tr><th>Date</th><th>Tournament</th>{mode === "D" && <th>Partner</th>}<th>Result</th><th className="num">PR val</th></tr></thead>
                     <tbody>
                       {profile.log.map((s, i) => (
                         <tr key={i}>
@@ -2699,7 +2717,7 @@ export default function ARTPTracker() {
                           <td>{s.tournament} <span className="tier">· {s.tier}</span></td>
                           {mode === "D" && <td className="partner">{s.partner || "—"}</td>}
                           <td><span className={`res ${s.round}`}>{ROUND_LABEL[s.round]}</span></td>
-                          <td className="num pts">{fmt(s.pts)}</td>
+                          <td className="num pts">{fmt(s.val)}</td>
                         </tr>
                       ))}
                     </tbody>
