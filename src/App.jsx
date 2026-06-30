@@ -25,7 +25,7 @@ const PTS = {
   "Challenger": { W: 150,  F: 100,  SF: 75,  QF: 45,  R16: 25,  R32: 15 },
 };
 const ROUND_DEPTH = { W: 6, F: 5, SF: 4, QF: 3, R16: 2, R32: 1, R64: 0, RR: -1 };
-const ROUND_LABEL = { W: "Champion", F: "Finalist", SF: "Semifinalist", QF: "Quarterfinalist", R16: "Round of 16", R32: "Round of 32", R64: "Round of 64", RR: "Round Robin" };
+const ROUND_LABEL = { W: "Champion", F: "Finalist", SF: "Semifinalist", QF: "Quarterfinalist", R16: "R16", R32: "R32", R64: "R64", RR: "RR" };
 
 const ALIASES = {
   vitzaru: "vitzaru", vitzius: "vitzaru", joethepayne: "vitzaru", kunsaz: "vitzaru",
