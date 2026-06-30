@@ -38,7 +38,7 @@ const ALIASES = {
   andrewluvzgo: "andrewluvzgod", ambitiouscaleb: "ambitiouscalebb", steevs: "steezvs",
   xxx123phoneix123xx: "xxx123phoenix123xx", flenxugreatest: "flenxuu", flenxu_greatest: "flenxuu",
 };
-const FORCE_DISPLAY = { vitzaru: "vitzaru", slowflin2442: "Slowflin2442", major1klasy: "kuzuderee"};
+const FORCE_DISPLAY = { vitzaru: "vitzaru", slowflin2442: "Slowflin2442", major1klasy: "kuzuderee" };
 const canon = (n) => { const k = n.trim().toLowerCase(); return ALIASES[k] || k; };
 const ptsFor = (tier, round) => (PTS[tier] && PTS[tier][round]) || 0;
 const decayW = (daysAgo, hl) => (daysAgo <= GRACE_DAYS ? 1 : Math.pow(0.5, (daysAgo - GRACE_DAYS) / hl));
