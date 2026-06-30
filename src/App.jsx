@@ -1251,7 +1251,7 @@ export default function ARTPTracker() {
       <style>{CSS}</style>
       <div className="wrap">
         <div className="topbar">
-          <div className="brand"><span className="mark">ARTP<span className="ball">·</span>PR</span><span className="sub">Power Ranking · S6–S8</span></div>
+          <div className="brand"><span className="mark">ARTP<span className="ball">·</span>TRACKER</span><span className="sub">Power Ranking · S6–S8</span></div>
           <div className="tools">
             <div className="seg">
               <button className={mode === "S" ? "on" : ""} onClick={() => setMode("S")}><User /> Singles</button>
