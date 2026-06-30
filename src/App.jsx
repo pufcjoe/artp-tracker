@@ -29,7 +29,7 @@ const ROUND_LABEL = { W: "Champion", F: "Finalist", SF: "Semifinalist", QF: "Qua
 
 const ALIASES = {
   vitzaru: "vitzaru", vitzius: "vitzaru", joethepayne: "vitzaru", kunsaz: "vitzaru",
-  kuzuderee: "MAJOR1KLASY", MAJOR1KLASY: "kuzuderee",
+  kuzuderee: "kuzuderee", MAJOR1KLASY: "kuzuderee",
   vitzonlyjoshv: "vitzaru", vitzari: "vitzaru",
   flenxu: "flenxuu", ilyanasheii: "ilyanashei", xvxcai: "xvcxai", cristyvalentin: "cristy_valentin",
   khaledraii: "wingstopeffect", beardofglaz3: "wingstopeffect",
