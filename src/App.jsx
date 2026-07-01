@@ -65,7 +65,7 @@ const ALIASES = {
 const FORCE_DISPLAY = {
   vitzaru: "vitzaru",
   slowflin2442: "Slowflin2442",
-  major1klasy: "kuzuderee",
+  kuzuderee: "kuzuderee",
   flenxuu: "flenxuu",
 };
 
