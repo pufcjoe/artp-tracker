@@ -66,8 +66,9 @@ const ALIASES = {
 const FORCE_DISPLAY = {
   vitzaru: "vitzaru",
   slowflin2442: "Slowflin2442",
-  kuzuderee: "kuzuderee",
+  major1klasy: "kuzuderee",
   flenxuu: "flenxuu",
+  "1kopt": "AndrewLuvzGod",
 };
 
 const canon = (n) => { const k = n.trim().toLowerCase(); return ALIASES[k] || k; };
