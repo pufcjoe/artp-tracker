@@ -60,7 +60,6 @@ const ALIASES = {
   xxx123phoneix123xx: "xxx123phoenix123xx", flenxugreatest: "flenxuu", flenxu_greatest: "flenxuu",
   calvhin: "caivhin", loumac700: "loumac", xx123phoenix123xx: "xxx123phoenix123xx", "3norty": "norty",
   cristyvalentin_2005: "cristy_valentin", khaiedrai: "wingstopeffect", lava: "ytlavaawesomeness",
-  "1kopt": "andrewluvzgod",
 };
 
 const FORCE_DISPLAY = {
@@ -68,7 +67,6 @@ const FORCE_DISPLAY = {
   slowflin2442: "Slowflin2442",
   major1klasy: "kuzuderee",
   flenxuu: "flenxuu",
-  "1kopt": "AndrewLuvzGod",
 };
 
 const canon = (n) => { const k = n.trim().toLowerCase(); return ALIASES[k] || k; };
