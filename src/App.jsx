@@ -60,7 +60,7 @@ const ALIASES = {
   xxx123phoneix123xx: "xxx123phoenix123xx", flenxugreatest: "flenxuu", flenxu_greatest: "flenxuu",
   calvhin: "caivhin", loumac700: "loumac", xx123phoenix123xx: "xxx123phoenix123xx", "3norty": "norty",
   cristyvalentin_2005: "cristy_valentin", khaiedrai: "wingstopeffect", lava: "ytlavaawesomeness",
-  "1kopt": "andrewluvzgod"
+  "1kopt": "andrewluvzgod",
 };
 
 const FORCE_DISPLAY = {
